@@ -1,5 +1,4 @@
 import { createAppAuth } from "@octokit/auth-app";
-import {  } from 'octokit'
 
 export const githutAuth = createAppAuth({
   appId: process.env.GITHUB_APP_ID,

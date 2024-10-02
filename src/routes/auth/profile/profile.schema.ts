@@ -4,7 +4,7 @@ export const profileRequest = z.object({
   authorization: z.string().openapi({
     param: {
       in: "header",
-      name: "authorization",
+      name: "authorization"
     },
   }),
 });

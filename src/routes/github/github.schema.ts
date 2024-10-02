@@ -14,3 +14,12 @@ export const githubInstallAppRequest = z.object({
     },
   }),
 });
+
+export const githubGetRepoRequest = z.object({
+  installation_id: z.string().openapi({
+    param: {
+      in: "path",
+      name: "installation_id",
+    },
+  })
+});

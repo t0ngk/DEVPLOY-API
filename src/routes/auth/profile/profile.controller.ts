@@ -9,6 +9,11 @@ export const profileRoute = createRoute({
   description: "Get the user's profile",
   tags: ["Profile", "Auth"],
   middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: []
+    }
+  ],
   request: {
     headers: profileRequest
   },

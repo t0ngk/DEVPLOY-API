@@ -10,6 +10,13 @@ import githubRoute from "./routes/github/github.handler";
 
 const app = new OpenAPIHono();
 
+app.openAPIRegistry.registerComponent("securitySchemes", "GoogleOAuthJWT", {
+  type: "http",
+  scheme: "bearer",
+  in: "header",
+  description: "Bearer JWT token",
+});
+
 app.doc("/openapi.json", {
   openapi: "3.0.0",
   info: {
