@@ -12,17 +12,18 @@ datasource db {
 }
 
 model User {
-  id         Int          @id @default(autoincrement())
-  studentId  String       @unique
+  id         Int               @id @default(autoincrement())
+  studentId  String            @unique
   firstName  String
   lastName   String
-  email      String       @unique
+  email      String            @unique
   picture    String?
-  role       Role         @default(MEMBER)
+  role       Role              @default(MEMBER)
   souce      Souce[]
-  Workspace  Workspace[]
   Permission Permission[]
   Appication Appication[]
+  Workspaces UserOfWorkspace[]
+  Invite     Invite[]
 }
 
 model Souce {
@@ -33,13 +34,14 @@ model Souce {
 }
 
 model Workspace {
-  id         Int          @id @default(autoincrement())
+  id         Int               @id @default(autoincrement())
   name       String
-  User       User?        @relation(fields: [userId], references: [id])
-  userId     Int?
+  slug       String            @unique
   permission Permission[]
   Appication Appication[]
   Database   Database[]
+  Members    UserOfWorkspace[]
+  Invite     Invite[]
 }
 
 model Appication {
@@ -49,9 +51,9 @@ model Appication {
   buildPack   String
   config      Json
   createBy    User      @relation(fields: [userId], references: [id])
+  userId      Int
   Workspace   Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId Int
-  userId      Int
 }
 
 model Database {
@@ -66,10 +68,27 @@ model Database {
 model Permission {
   id          Int        @id @default(autoincrement())
   role        Role
-  User        User?      @relation(fields: [userId], references: [id])
+  User        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int?
-  Workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  Workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   workspaceId Int?
+}
+
+model UserOfWorkspace {
+  User        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  Workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId Int
+
+  @@id([userId, workspaceId])
+}
+
+model Invite {
+  id          Int       @id @default(autoincrement())
+  Workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId Int
+  toUser      User?     @relation(fields: [toUserId], references: [id])
+  toUserId    Int?
 }
 
 enum Role {

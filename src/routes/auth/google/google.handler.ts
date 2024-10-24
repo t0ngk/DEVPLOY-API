@@ -40,6 +40,7 @@ app.openapi(googleCallbackRoute, async (c) => {
 
   const tokens = await google.validateAuthorizationCode(code, codeVerifier);
   const googleProfile = await getGoogleProfile(tokens.accessToken);
+  const isOwner = (await prisma.user.count()) === 0;
   if (!googleProfile) {
     return c.json(
       {
@@ -54,14 +55,50 @@ app.openapi(googleCallbackRoute, async (c) => {
     },
   });
   if (!user) {
-    await prisma.user.create({
-      data: {
-        email: googleProfile.email,
-        studentId: googleProfile.email.split("@")[0],
-        firstName: googleProfile.given_name,
-        lastName: googleProfile.family_name,
-        picture: googleProfile.picture,
-      },
+    const DEFAULT_WORKSPACE_NAME = `${googleProfile.given_name}'s Workspace`;
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: googleProfile.email,
+          studentId: googleProfile.email.split("@")[0],
+          firstName: googleProfile.given_name,
+          lastName: googleProfile.family_name,
+          picture: googleProfile.picture,
+          role: isOwner ? "OWNER" : "MEMBER",
+        },
+      });
+      const workspace = await tx.workspace.create({
+        data: {
+          name: DEFAULT_WORKSPACE_NAME,
+          slug: DEFAULT_WORKSPACE_NAME.toLowerCase()
+            .replaceAll(" ", "-")
+            .replace(/[^a-zA-Z0-9-_\.]/g, ""),
+          permission: {
+            create: {
+              role: "OWNER",
+              User: {
+                connect: {
+                  id: user.id,
+                },
+              },
+            },
+          },
+        },
+      });
+      await tx.userOfWorkspace.create({
+        data: {
+          User: {
+            connect: {
+              id: user.id,
+            },
+          },
+          Workspace: {
+            connect: {
+              id: workspace.id,
+            },
+          },
+        },
+      });
     });
   }
   setCookie(c, "accessToken", tokens.accessToken, {
