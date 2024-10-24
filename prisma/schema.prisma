@@ -18,9 +18,11 @@ model User {
   lastName   String
   email      String       @unique
   picture    String?
+  role       Role         @default(MEMBER)
   souce      Souce[]
   Workspace  Workspace[]
   Permission Permission[]
+  Appication Appication[]
 }
 
 model Souce {
@@ -46,8 +48,10 @@ model Appication {
   gitHub      String
   buildPack   String
   config      Json
+  createBy    User      @relation(fields: [userId], references: [id])
   Workspace   Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId Int
+  userId      Int
 }
 
 model Database {
