@@ -9,5 +9,8 @@
     "typeRoots": ["node_modules/@types", "./global.d.ts"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
+  },
+  "watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/.git"]
   }
 }
