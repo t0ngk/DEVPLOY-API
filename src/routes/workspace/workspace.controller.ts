@@ -85,6 +85,6 @@ export const createWorkspaceRoute = createRoute({
     },
     406: {
       description: "Workspace already taken",
-    },
+    }
   },
 });
