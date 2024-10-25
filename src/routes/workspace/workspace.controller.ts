@@ -85,6 +85,168 @@ export const createWorkspaceRoute = createRoute({
     },
     406: {
       description: "Workspace already taken",
-    }
+    },
+  },
+});
+
+export const renameWorkspaceRoute = createRoute({
+  method: "put",
+  path: "/:slug",
+  summary: "Rename Workspace",
+  description: "Rename Workspace",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Workspace renamed",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+    406: {
+      description: "Workspace name is already taken",
+    },
+  },
+});
+
+export const deleteWorkspaceRoute = createRoute({
+  method: "delete",
+  path: "/:slug",
+  summary: "Delete Workspace",
+  description: "Delete Workspace",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Workspace deleted",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+  },
+});
+
+export const sentInvaitationRoute = createRoute({
+  method: "post",
+  path: "/:slug/invite",
+  summary: "Sent Invitation",
+  description: "Sent Invitation to user",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            email: z.string().email(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Invitation sent",
+    },
+    400: {
+      description: "You can't invite yourself",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+    406: {
+      description: "User not found",
+    },
+    409: {
+      description: "User already invited",
+    },
+  },
+});
+
+export const deleteInvitationRoute = createRoute({
+  method: "delete",
+  path: "/:slug/invite",
+  summary: "Delete Invitation",
+  description: "Delete Invitation",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            email: z.string().email(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Invitation deleted",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+    406: {
+      description: "User not found",
+    },
   },
 });
