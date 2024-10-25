@@ -24,7 +24,8 @@
 			"extensions": [
 				"Prisma.prisma",
 				"esbenp.prettier-vscode",
-				"seatonjiang.gitmoji-vscode"
+				"seatonjiang.gitmoji-vscode",
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	}
