@@ -250,3 +250,48 @@ export const deleteInvitationRoute = createRoute({
     },
   },
 });
+
+export const deleteMemberRoute = createRoute({
+  method: "delete",
+  path: "/:slug/member",
+  summary: "Delete Member",
+  description: "Delete Member",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            email: z.string().email(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Member deleted",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+    406: {
+      description: "User not found",
+    },
+    409: {
+      description: "Can't delete yourself or owner",
+    },
+  },
+});

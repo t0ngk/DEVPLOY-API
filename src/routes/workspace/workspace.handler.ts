@@ -3,6 +3,7 @@ import { Context } from "../../libs/types/Context";
 import {
   createWorkspaceRoute,
   deleteInvitationRoute,
+  deleteMemberRoute,
   deleteWorkspaceRoute,
   getWorkspaceBySlugRoute,
   getWorkspacesRoute,
@@ -301,6 +302,53 @@ app.openapi(deleteInvitationRoute, async (c) => {
   });
   return c.json({
     message: "Invitation deleted",
+  });
+});
+
+app.openapi(deleteMemberRoute, async (c) => {
+  const slug = c.req.param("slug");
+  const { email } = await c.req.json<{ email: string }>();
+  const user = await prisma.user.findFirst({
+    where: {
+      email,
+    },
+  });
+  if (!user) {
+    return c.json({ message: "User not found" }, 406);
+  }
+  const thisUser = c.get("user");
+  const permission = await prisma.permission.findFirst({
+    where: {
+      userId: user.id,
+      Workspace: {
+        slug,
+      },
+      role: "OWNER",
+    },
+  });
+  if (permission || user.id === thisUser.id) {
+    return c.json({ message: "Can't delete yourself or owner" }, 409);
+  }
+  const workspace = await getWorkspace(slug, c.get("user").id);
+  if (!workspace) {
+    return c.json({ message: "Permission denied or workspace not found" }, 404);
+  }
+  await prisma.$transaction([
+    prisma.userOfWorkspace.deleteMany({
+      where: {
+        userId: user.id,
+        workspaceId: workspace.id,
+      },
+    }),
+    prisma.permission.deleteMany({
+      where: {
+        userId: user.id,
+        workspaceId: workspace.id,
+      },
+    }),
+  ])
+  return c.json({
+    message: "Member deleted",
   });
 });
 
