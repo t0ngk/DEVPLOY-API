@@ -8,6 +8,7 @@ import { cors } from "hono/cors";
 import authRoute from "./routes/auth/auth.handler";
 import githubRoute from "./routes/github/github.handler";
 import workspaceRoute from "./routes/workspace/workspace.handler";
+import inviteRoute from "./routes/invite/invite.handler";
 
 const app = new OpenAPIHono();
 
@@ -40,7 +41,8 @@ app.use(cors());
 
 app.route("/auth", authRoute);
 app.route("/github", githubRoute);
-app.route("/workspace", workspaceRoute)
+app.route("/workspace", workspaceRoute);
+app.route("/invite", inviteRoute);
 
 const port = 3000;
 
