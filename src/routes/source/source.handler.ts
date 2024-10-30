@@ -25,18 +25,29 @@ app.openapi(getAllSourcesRoute, async (c) => {
 
   for (let index = 0; index < souces.length; index++) {
     const souce = souces[index];
-    const { data: sourceInfo } = await octokit.rest.apps.getInstallation({
-      installation_id: parseInt(souce.installID),
-    });
-    sourceWithInfo.push({
-      installID: souce.installID,
-      name:
-        "login" in sourceInfo.account! ? sourceInfo.account.login : "Unknown",
-      avatar:
-        "avatar_url" in sourceInfo.account!
-          ? sourceInfo.account.avatar_url
-          : "",
-    });
+    try {
+      const { data: sourceInfo } =
+        await octokit.rest.apps.getInstallation({
+          installation_id: parseInt(souce.installID),
+        });
+      sourceWithInfo.push({
+        installID: souce.installID,
+        name:
+          "login" in sourceInfo.account! ? sourceInfo.account.login : "Unknown",
+        avatar:
+          "avatar_url" in sourceInfo.account!
+            ? sourceInfo.account.avatar_url
+            : "",
+      });
+    } catch (error) {
+      if ((error as any).status === 404) {
+        await prisma.souce.delete({
+          where: {
+            installID: souce.installID,
+          },
+        });
+      }
+    }
   }
   console.log(sourceWithInfo);
   return c.json(sourceWithInfo);
