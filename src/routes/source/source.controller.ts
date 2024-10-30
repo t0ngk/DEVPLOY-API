@@ -22,3 +22,33 @@ export const getAllSourcesRoute = createRoute({
     },
   },
 });
+
+export const getSourceRepoRoute = createRoute({
+  method: "get",
+  path: "/:installID/repos",
+  summary: "Get Source Repos",
+  description: "Get Source Repos from Installation ID",
+  tags: ["Source"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      installID: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Return Source Repos",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Source not found",
+    },
+  },
+});
