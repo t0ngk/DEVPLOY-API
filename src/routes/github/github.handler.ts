@@ -2,15 +2,16 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { Context } from "../../libs/types/Context";
 import { githubGetRepoRoute, githubInstallAppRoute } from "./github.controller";
 import prisma from "../../libs/prisma";
-import { githutAuth } from "../../libs/githubAuth";
+import { githubAuth } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
+import { createOAuthUserAuth } from "@octokit/auth-app";
 
 const app = new OpenAPIHono<Context>();
 
 // https://github.com/apps/devploy-dev/installations/new/
 app.openapi(githubInstallAppRoute, async (c) => {
-  const { installation_id, setup_action } = c.req.query();
-  console.log(installation_id, setup_action);
+  const { installation_id, setup_action, code } = c.req.query();
+  console.log(installation_id, setup_action, code);
   const user = c.get("user");
   if (setup_action == "install") {
     const newSouce = await prisma.souce.create({
@@ -46,7 +47,7 @@ app.openapi(githubGetRepoRoute, async (c) => {
       401
     );
   }
-  const githubApp = await githutAuth({
+  const githubApp = await githubAuth({
     type: "installation",
     installationId: source.installID,
   });

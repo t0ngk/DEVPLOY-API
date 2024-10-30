@@ -124,7 +124,7 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
       return {
         ...member.User,
         Permission: member.User?.Permission[0].role,
-      }
+      };
     }),
     Invite: workspace.Invite.map((invite) => invite.toUser),
   });
@@ -346,7 +346,7 @@ app.openapi(deleteMemberRoute, async (c) => {
         workspaceId: workspace.id,
       },
     }),
-  ])
+  ]);
   return c.json({
     message: "Member deleted",
   });
