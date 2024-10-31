@@ -2,9 +2,10 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { Context } from "../../libs/types/Context";
 import { getAllSourcesRoute, getSourceRepoRoute } from "./source.controller";
 import prisma from "../../libs/prisma";
-import { githubAuth } from "../../libs/githubAuth";
+import { githubAppAPI, githubAuth, githubUserAPI } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
 import { Source } from "./source.schema";
+import { components } from "@octokit/openapi-types";
 
 const app = new OpenAPIHono<Context>();
 
@@ -14,29 +15,22 @@ app.openapi(getAllSourcesRoute, async (c) => {
       userId: c.get("user").id,
     },
   });
-  const githubApp = await githubAuth({
-    type: "app",
-  });
-  const octokit = new Octokit({
-    auth: githubApp.token,
-  });
+  const githubApp = await githubAppAPI();
 
   const sourceWithInfo: Source[] = [];
 
   for (let index = 0; index < souces.length; index++) {
     const souce = souces[index];
     try {
-      const { data: sourceInfo } = await octokit.rest.apps.getInstallation({
+      const { data: sourceInfo } = await githubApp.rest.apps.getInstallation({
         installation_id: parseInt(souce.installID),
       });
+      const souceAccount =
+        sourceInfo.account as components["schemas"]["simple-user"];
       sourceWithInfo.push({
         installID: souce.installID,
-        name:
-          "login" in sourceInfo.account! ? sourceInfo.account.login : "Unknown",
-        avatar:
-          "avatar_url" in sourceInfo.account!
-            ? sourceInfo.account.avatar_url
-            : "",
+        name: souceAccount.login,
+        avatar: souceAccount.avatar_url,
       });
     } catch (error) {
       if ((error as any).status === 404) {
@@ -63,49 +57,28 @@ app.openapi(getSourceRepoRoute, async (c) => {
   if (!source) {
     return c.json({ message: "Source not found" }, 404);
   }
-  const githubApp = await githubAuth({
-    type: "installation",
-    installationId: source.installID,
+  const githubApp = await githubAppAPI();
+  const userAPI = await githubUserAPI(parseInt(installID));
+  const { data: targetRequest } = await githubApp.rest.apps.getInstallation({
+    installation_id: parseInt(installID),
   });
-  const octokit = new Octokit({
-    auth: githubApp.token,
+  const targetAccount =
+    targetRequest.account as components["schemas"]["simple-user"];
+  const { data: rawRepos } = await userAPI.rest.repos.listForUser({
+    username: targetAccount.login,
+    per_page: 5,
+    sort: "updated",
   });
-  const MAX_REPOS = 100;
-  const { data } = await octokit.request("GET /installation/repositories", {
-    headers: {
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    per_page: MAX_REPOS,
-  });
-  const remainFetch = (data.total_count - data.repositories.length) / MAX_REPOS;
-  for (let i = 0; i < remainFetch; i++) {
-    console.log("fetching", i + 2);
-    const { data: data2 } = await octokit.request(
-      "GET /installation/repositories",
-      {
-        headers: {
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        per_page: MAX_REPOS,
-        page: i + 2,
-      }
-    );
-    data.repositories = data.repositories.concat(data2.repositories);
-  }
-  data.repositories = data.repositories.sort((a, b) => {
-    return Date.parse(b.updated_at!) - Date.parse(a.updated_at!);
-  });
-  
-  const repos = data.repositories.map((repo) => {
-    return {
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
-      language: repo.language,
-    };
-  });
-
-  return c.json(repos);
+  return c.json(
+    rawRepos.map((repo) => {
+      return {
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        language: repo.language,
+      };
+    })
+  );
 });
 
 export default app;
