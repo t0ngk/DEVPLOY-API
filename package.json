@@ -8,6 +8,7 @@
     "@hono/node-server": "^1.13.1",
     "@hono/zod-openapi": "^0.15.3",
     "@octokit/auth-app": "^7.1.1",
+    "@octokit/openapi-types": "^22.2.0",
     "@prisma/client": "5.18.0",
     "@scalar/hono-api-reference": "^0.5.152",
     "arctic": "^1.9.2",

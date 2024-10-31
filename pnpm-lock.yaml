@@ -17,6 +17,9 @@ importers:
       '@octokit/auth-app':
         specifier: ^7.1.1
         version: 7.1.1
+      '@octokit/openapi-types':
+        specifier: ^22.2.0
+        version: 22.2.0
       '@prisma/client':
         specifier: 5.18.0
         version: 5.18.0(prisma@5.20.0)
