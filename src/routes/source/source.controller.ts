@@ -39,6 +39,9 @@ export const getSourceRepoRoute = createRoute({
     params: z.object({
       installID: z.string(),
     }),
+    query: z.object({
+      search: z.string().optional(),
+    })
   },
   responses: {
     200: {

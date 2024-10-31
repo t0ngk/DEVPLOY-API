@@ -16,9 +16,8 @@ app.openapi(getAllSourcesRoute, async (c) => {
     },
   });
   const githubApp = await githubAppAPI();
-
   const sourceWithInfo: Source[] = [];
-
+  
   for (let index = 0; index < souces.length; index++) {
     const souce = souces[index];
     try {
@@ -48,6 +47,7 @@ app.openapi(getAllSourcesRoute, async (c) => {
 
 app.openapi(getSourceRepoRoute, async (c) => {
   const installID = c.req.param("installID");
+  const {search} = c.req.query();
   const source = await prisma.souce.findFirst({
     where: {
       installID: installID,
@@ -64,13 +64,13 @@ app.openapi(getSourceRepoRoute, async (c) => {
   });
   const targetAccount =
     targetRequest.account as components["schemas"]["simple-user"];
-  const { data: rawRepos } = await userAPI.rest.repos.listForUser({
-    username: targetAccount.login,
+  const { data: rawRepos } = await userAPI.rest.search.repos({
+    q: `${search ? search + " in:name" : ''} user:${targetAccount.login}`,
     per_page: 5,
     sort: "updated",
   });
   return c.json(
-    rawRepos.map((repo) => {
+    rawRepos.items.map((repo) => {
       return {
         id: repo.id,
         name: repo.name,
