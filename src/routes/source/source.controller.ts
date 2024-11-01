@@ -55,3 +55,34 @@ export const getSourceRepoRoute = createRoute({
     },
   },
 });
+
+export const getRepoBranchesRoute = createRoute({
+  method: "get",
+  path: "/:installID/:repo/branches",
+  summary: "Get Repo Branchs",
+  description: "Get Repo Branchs from Installation ID and Repo",
+  tags: ["Source"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      installID: z.string(),
+      repo: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Return Repo Branchs",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Source not found",
+    },
+  },
+})

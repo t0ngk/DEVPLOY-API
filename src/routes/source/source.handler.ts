@@ -1,6 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Context } from "../../libs/types/Context";
-import { getAllSourcesRoute, getSourceRepoRoute } from "./source.controller";
+import {
+  getAllSourcesRoute,
+  getRepoBranchesRoute,
+  getSourceRepoRoute,
+} from "./source.controller";
 import prisma from "../../libs/prisma";
 import { githubAppAPI, githubAuth, githubUserAPI } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
@@ -17,7 +21,7 @@ app.openapi(getAllSourcesRoute, async (c) => {
   });
   const githubApp = await githubAppAPI();
   const sourceWithInfo: Source[] = [];
-  
+
   for (let index = 0; index < souces.length; index++) {
     const souce = souces[index];
     try {
@@ -47,7 +51,7 @@ app.openapi(getAllSourcesRoute, async (c) => {
 
 app.openapi(getSourceRepoRoute, async (c) => {
   const installID = c.req.param("installID");
-  const {search} = c.req.query();
+  const { search } = c.req.query();
   const source = await prisma.souce.findFirst({
     where: {
       installID: installID,
@@ -65,7 +69,7 @@ app.openapi(getSourceRepoRoute, async (c) => {
   const targetAccount =
     targetRequest.account as components["schemas"]["simple-user"];
   const { data: rawRepos } = await userAPI.rest.search.repos({
-    q: `${search ? search + " in:name" : ''} user:${targetAccount.login}`,
+    q: `${search ? search + " in:name" : ""} user:${targetAccount.login}`,
     per_page: 5,
     sort: "updated",
   });
@@ -76,6 +80,38 @@ app.openapi(getSourceRepoRoute, async (c) => {
         name: repo.name,
         full_name: repo.full_name,
         language: repo.language,
+      };
+    })
+  );
+});
+
+app.openapi(getRepoBranchesRoute, async (c) => {
+  const installID = c.req.param("installID");
+  const repo = c.req.param("repo");
+  const source = await prisma.souce.findFirst({
+    where: {
+      installID: installID,
+      userId: c.get("user").id,
+    },
+  });
+  if (!source) {
+    return c.json({ message: "Source not found" }, 404);
+  }
+  const githubApp = await githubAppAPI();
+  const userAPI = await githubUserAPI(parseInt(installID));
+  const { data: targetRequest } = await githubApp.rest.apps.getInstallation({
+    installation_id: parseInt(installID),
+  });
+  const targetAccount =
+    targetRequest.account as components["schemas"]["simple-user"];
+  const { data: rawBranchs } = await userAPI.rest.repos.listBranches({
+    owner: targetAccount.login,
+    repo: repo,
+  });
+  return c.json(
+    rawBranchs.map((branch) => {
+      return {
+        name: branch.name,
       };
     })
   );
