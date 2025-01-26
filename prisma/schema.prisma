@@ -48,6 +48,7 @@ model Appication {
   id          Int       @id @default(autoincrement())
   name        String
   gitHub      String
+  branch      String
   buildPack   String
   config      Json
   createBy    User      @relation(fields: [userId], references: [id])

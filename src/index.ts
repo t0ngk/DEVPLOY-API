@@ -10,6 +10,7 @@ import githubRoute from "./routes/github/github.handler";
 import workspaceRoute from "./routes/workspace/workspace.handler";
 import inviteRoute from "./routes/invite/invite.handler";
 import source from "./routes/source/source.handler";
+import application from "./routes/application/application.handler";
 
 const app = new OpenAPIHono();
 
@@ -45,6 +46,7 @@ app.route("/github", githubRoute);
 app.route("/workspace", workspaceRoute);
 app.route("/invite", inviteRoute);
 app.route("/source", source);
+app.route("/application", application);
 
 const port = 3000;
 

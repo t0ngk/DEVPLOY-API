@@ -75,11 +75,13 @@ app.openapi(getSourceRepoRoute, async (c) => {
   });
   return c.json(
     rawRepos.items.map((repo) => {
+      console.log(repo);
       return {
         id: repo.id,
         name: repo.name,
         full_name: repo.full_name,
         language: repo.language,
+        cloneUrl: repo.clone_url,
       };
     })
   );

@@ -14,10 +14,9 @@ const app = new OpenAPIHono();
 app.openapi(googleLoginRoute, async (c) => {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
-  const url: URL = await google.createAuthorizationURL(state, codeVerifier, {
-    scopes: ["profile", "email"],
-  });
+  const url: URL = google.createAuthorizationURL(state, codeVerifier, ["profile", "email"]);
   url.searchParams.set("access_type", "offline");
+  console.log(url);
   setCookie(c, "state", state, { secure: true });
   setCookie(c, "codeVerifier", codeVerifier, { secure: true });
   return c.redirect(url.toString());
@@ -39,7 +38,7 @@ app.openapi(googleCallbackRoute, async (c) => {
   }
 
   const tokens = await google.validateAuthorizationCode(code, codeVerifier);
-  const googleProfile = await getGoogleProfile(tokens.accessToken);
+  const googleProfile = await getGoogleProfile(tokens.accessToken());
   const isOwner = (await prisma.user.count()) === 0;
   if (!googleProfile) {
     return c.json(
@@ -101,12 +100,12 @@ app.openapi(googleCallbackRoute, async (c) => {
       });
     });
   }
-  setCookie(c, "accessToken", tokens.accessToken, {
+  setCookie(c, "accessToken", tokens.accessToken(), {
     secure: true,
-    expires: tokens.accessTokenExpiresAt,
+    expires: tokens.accessTokenExpiresAt(),
   });
-  if (tokens.refreshToken) {
-    setCookie(c, "refreshToken", tokens.refreshToken, {
+  if (tokens.hasRefreshToken()) {
+    setCookie(c, "refreshToken", tokens.refreshToken(), {
       secure: true,
     });
   }
@@ -121,13 +120,13 @@ app.openapi(googleRefreshTokenRoute, async (c) => {
     return c.json({ message: "Unauthorized" }, 401);
   }
   const tokens = await google.refreshAccessToken(refreshToken);
-  setCookie(c, "accessToken", tokens.accessToken, {
+  setCookie(c, "accessToken", tokens.accessToken(), {
     secure: true,
-    expires: tokens.accessTokenExpiresAt,
+    expires: tokens.accessTokenExpiresAt(),
   });
   return c.json({
-    accessToken: tokens.accessToken,
-    expiresAt: tokens.accessTokenExpiresAt,
+    accessToken: tokens.accessToken(),
+    expiresAt: tokens.accessTokenExpiresAt(),
   });
 });
 
