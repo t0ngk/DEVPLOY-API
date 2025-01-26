@@ -16,6 +16,7 @@ app.openapi(googleLoginRoute, async (c) => {
   const codeVerifier = generateCodeVerifier();
   const url: URL = google.createAuthorizationURL(state, codeVerifier, ["profile", "email"]);
   url.searchParams.set("access_type", "offline");
+  url.searchParams.set("prompt", "consent");
   console.log(url);
   setCookie(c, "state", state, { secure: true });
   setCookie(c, "codeVerifier", codeVerifier, { secure: true });
