@@ -295,3 +295,43 @@ export const deleteMemberRoute = createRoute({
     },
   },
 });
+
+export const applicationCreateRoute = createRoute({
+  method: "post",
+  path: "/:slug/application",
+  summary: "Create Application",
+  description: "Create Application",
+  tags: ["Application"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string(),
+            github: z.string().url(),
+            branch: z.string(),
+            buildPack: z.string(),
+            souceId: z.string()
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Return Application",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});

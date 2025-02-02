@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Context } from "../../libs/types/Context";
 import {
+  applicationCreateRoute,
   createWorkspaceRoute,
   deleteInvitationRoute,
   deleteMemberRoute,
@@ -351,5 +352,65 @@ app.openapi(deleteMemberRoute, async (c) => {
     message: "Member deleted",
   });
 });
+
+app.openapi(applicationCreateRoute, async (c) => {
+  const user = c.get("user");
+  const allApplications = await prisma.appication.count(
+    {
+      where: {
+        userId: user.id,
+      }
+    }
+  );
+  const isLimitReached = allApplications >= 5;
+  if (isLimitReached) {
+    return c.json({
+      message: "You have reached the limit of applications",
+    }, 400);
+  }
+  const body = await c.req.json();
+  const souce = await prisma.souce.findFirst({
+    where: {
+      userId: user.id,
+      installID: body.sourceId,
+    }
+  });
+  if (!souce) {
+    return c.json({
+      message: "Source not found",
+    }, 404);
+  }
+  const workspace = await prisma.workspace.findFirst({
+    where: {
+      slug: c.req.param("slug"),
+      Members: {
+        some: {
+          userId: user.id,
+        },
+      },
+    },
+  });
+  if (!workspace) {
+    return c.json({
+      message: "Permission denied or workspace not found",
+    }, 404);
+  }
+  const application = await prisma.appication.create({
+    data: {
+      userId: user.id,
+      name: body.name,
+      gitHub: body.github,
+      branch: body.branch,
+      buildPack: body.buildPack,
+      config: {},
+      workspaceId: workspace.id,
+      souceId: souce.id,
+    }
+  })
+  return c.json({
+    message: "Application created",
+    applicationId: application.id,
+  });
+})
 
 export default app;
