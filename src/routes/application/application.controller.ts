@@ -103,3 +103,16 @@ export const deleteApplicationRoute = createRoute({
     },
   },
 });
+
+export const deployApplication = createRoute({
+  method: "post",
+  path: "/:id/deploy",
+  summary: "Deploy Application",
+  description: "Deploy Application by id",
+  tags: ["Application"],
+  responses: {
+    200: {
+      description: "Application deployed",
+    }
+  }
+})

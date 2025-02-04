@@ -26,3 +26,11 @@ export const githubUserAPI = async (installationID: number) => {
     auth: githubUser.token,
   });
 };
+
+export const getGithubUserToken = async (installationID: number) => {
+  const githubUser = await githubAuth({
+    type: "installation",
+    installationId: installationID,
+  });
+  return githubUser.token;
+}
