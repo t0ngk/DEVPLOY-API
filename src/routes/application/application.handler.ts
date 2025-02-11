@@ -160,36 +160,41 @@ app.openapi(deployApplication, async (c) => {
 
   await spawnAsync("rm", ["-rf", outputPath]);
   const output = await spawnAsync("git", command.split(" "));
+  const serviceName = `devploy-${application.id}`;
 
   const dockerFile = `FROM nginx:latest
 COPY . /usr/share/nginx/html`;
 
   await writeFile(`${outputPath}/Dockerfile`, dockerFile);
-  await spawnAsync("docker", ["build", "-t", application.id.toString(), outputPath]);
+  await spawnAsync("docker", ["build", "-t", serviceName, outputPath]);
   const serviceSetting: CreateServiceOptions = {
-    Name: application.id.toString(),
+    Name: serviceName,
     TaskTemplate: {
       ContainerSpec: {
-        Image: application.id.toString(),
+        Image: serviceName,
       },
+      Networks: [{
+        Target: "traefik-public",
+        Aliases: [serviceName]
+      }]
     },
-    EndpointSpec: {
-      Ports: [
-        {
-          Protocol: 'tcp',
-          TargetPort: 80,
-          PublishedPort: 8080,
-        },
-      ],
+    Networks: [{
+      Target: "traefik-public",
+      Aliases: [serviceName]
+    }],
+    Labels: {
+      "traefik.enable": "true",
+      "traefik.http.routers.devploy-app5.rule": "Host(`webtest.localhost`)",
+      "traefik.http.services.devploy-app5.loadbalancer.server.port": "80",
     }
   }
   const isExistService = await docker.listServices({
     filters: {
-      name: [application.id.toString()]
+      name: [serviceName]
     }
   });
   if (isExistService.length > 0) {
-    await spawnAsync("docker", ["service", "rm", application.id.toString()]);
+    await spawnAsync("docker", ["service", "rm", serviceName]);
   }
   try {
     await docker.createService(serviceSetting);
