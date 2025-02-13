@@ -405,6 +405,7 @@ app.openapi(applicationCreateRoute, async (c) => {
       config: {},
       workspaceId: workspace.id,
       souceId: souce.id,
+      logs: []
     }
   })
   return c.json({

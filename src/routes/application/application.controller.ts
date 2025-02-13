@@ -104,12 +104,23 @@ export const deleteApplicationRoute = createRoute({
   },
 });
 
-export const deployApplication = createRoute({
+export const deployApplicationRoute = createRoute({
   method: "post",
   path: "/:id/deploy",
   summary: "Deploy Application",
   description: "Deploy Application by id",
   tags: ["Application"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
   responses: {
     200: {
       description: "Application deployed",

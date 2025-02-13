@@ -1,21 +1,33 @@
 import { spawn } from "node:child_process";
 
+export type SpawnAsyncOutput = {
+  code: number;
+  output: string[];
+}
+
 export const spawnAsync = (command: string, args?: string[]) => {
-  return new Promise<string[]>((resolve, reject) => {
+  return new Promise<SpawnAsyncOutput>((resolve, reject) => {
     const child = spawn(command, args ?? []);
-    let output:string[] = [];
+    let rawOutput = "";
     child.stdout?.on("data", (data) => {
-      output.push(data.toString());
+      rawOutput += data.toString();
     });
     child.stderr?.on("data", (data) => {
-      output.push(data.toString());
+      rawOutput += data.toString();
     });
     child.on("close", (code) => {
+      let output = rawOutput.replaceAll("\r", "\n").split("\n").map((x) => x.trim()).filter((x) => x !== "");
       if (code === 0) {
-        resolve(output);
+        resolve({
+          code,
+          output
+        });
       } else {
-        reject(new Error(`Command failed with code ${code}: ${output}`));
+        reject({
+          code,
+          output
+        });
       }
     });
   });
-}
+};

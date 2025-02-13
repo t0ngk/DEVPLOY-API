@@ -58,6 +58,8 @@ model Appication {
   workspaceId Int
   Souce       Souce?    @relation(fields: [souceId], references: [id])
   souceId     Int
+  status      Status    @default(notStarted)
+  logs        Json
 }
 
 model Database {
@@ -99,4 +101,11 @@ enum Role {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum Status {
+  notStarted
+  inProgress
+  Deployed
+  Failed
 }
