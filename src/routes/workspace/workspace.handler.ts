@@ -57,6 +57,14 @@ app.openapi(getWorkspacesRoute, async (c) => {
     select: {
       name: true,
       slug: true,
+      permission: {
+        where: {
+          userId: c.get("user").id,
+        },
+        select: {
+          role: true,
+        },
+      }
     },
   });
   return c.json(workspaces);
