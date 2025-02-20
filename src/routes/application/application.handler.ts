@@ -3,11 +3,20 @@ import { Context } from "../../libs/types/Context";
 import {
   deleteApplicationRoute,
   deployApplicationRoute,
+  disableApplicationRoute,
   editApplicationRoute,
   getApplicationFromIdRoute,
+  setURLApplicationRoute,
 } from "./application.controller";
 import prisma from "../../libs/prisma";
-import { deployApplication } from "../../libs/deploy";
+import {
+  createDynamicTraefikRule,
+  deployApplication,
+  disableApplication,
+} from "../../libs/deploy";
+import { docker } from "../../libs/docker";
+import { spawnAsync } from "../../libs/spawnAsync";
+import { version } from "os";
 
 const app = new OpenAPIHono<Context>();
 
@@ -17,6 +26,23 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
   if (isNaN(id)) {
     return c.json({ message: "Invalid id" }, 400);
   }
+  const isApplicationRunningInDocker = await docker.listServices({
+    filters: {
+      name: [`devploy-${id}`],
+    },
+  });
+
+  if (isApplicationRunningInDocker.length == 0) {
+    await prisma.appication.update({
+      where: {
+        id,
+      },
+      data: {
+        status: "notStarted",
+      },
+    });
+  }
+
   const application = await prisma.appication.findFirst({
     where: {
       id,
@@ -37,6 +63,7 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
       config: true,
       status: true,
       logs: true,
+      url: true,
       Souce: {
         select: {
           installID: true,
@@ -77,24 +104,28 @@ app.openapi(editApplicationRoute, async (c) => {
       404
     );
   }
-  const body = await c.req.json();
-  const souce = await prisma.souce.findFirst({
-    where: {
-      userId: user.id,
-      installID: body.sourceId,
-    },
-  });
+  let body = await c.req.json();
+  if (body.souceId) {
+    const souce = await prisma.souce.findFirst({
+      where: {
+        userId: user.id,
+        installID: body.sourceId,
+      },
+    });
+    if (!souce) {
+      return c.json({ message: "Source not found" }, 404);
+    }
+    body = {
+      ...body,
+      souceId: souce.id,
+    };
+  }
   await prisma.appication.update({
     where: {
       id,
     },
     data: {
-      name: body.name,
-      gitHub: body.github,
-      branch: body.branch,
-      buildPack: body.buildPack,
-      config: {},
-      souceId: souce?.id,
+      ...body,
     },
   });
   return c.json({ message: "Application updated" });
@@ -168,6 +199,91 @@ app.openapi(deployApplicationRoute, async (c) => {
   }
 
   return c.json({ message: "Application started deploying" });
+});
+
+app.openapi(disableApplicationRoute, async (c) => {
+  const user = c.get("user");
+  const id = parseInt(c.req.param("id"));
+  if (isNaN(id)) {
+    return c.json({ message: "Invalid id format" }, 400);
+  }
+  const application = await prisma.appication.findFirst({
+    where: {
+      id,
+      Workspace: {
+        Members: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    },
+  });
+  if (!application) {
+    return c.json({ message: "Application not found" }, 404);
+  }
+  if (await disableApplication(application)) {
+    return c.json({ message: "Application disabled" });
+  }
+  return c.json({ message: "Failed to disable application" }, 500);
+});
+
+app.openapi(setURLApplicationRoute, async (c) => {
+  const user = c.get("user");
+  const id = parseInt(c.req.param("id"));
+  if (isNaN(id)) {
+    return c.json({ message: "Invalid id format" }, 400);
+  }
+  const application = await prisma.appication.findFirst({
+    where: {
+      id,
+      Workspace: {
+        Members: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    },
+  });
+  if (!application) {
+    return c.json({ message: "Application not found" }, 404);
+  }
+  let body = await c.req.json();
+  if (body.url == "traefik") {
+    return c.json({ message: "this url has been restict" }, 400);
+  }
+  const urlExists = await prisma.appication.findFirst({
+    where: {
+      url: body.url,
+    },
+  });
+  if (urlExists) {
+    return c.json({ message: "URL already exists" }, 400);
+  }
+  await prisma.appication.update({
+    where: {
+      id,
+    },
+    data: {
+      url: body.url,
+    },
+  });
+  const findService = await docker.listServices({
+    filters: {
+      name: [`devploy-${id}`],
+    },
+  });
+  if (findService.length > 0) {
+    spawnAsync("docker", [
+      "service",
+      "update",
+      "--label-add",
+      `traefik.http.routers.devploy-app${id}.rule=Host("${body.url}.localhost")`,
+      `devploy-${id}`,
+    ]);
+  }
+  return c.json({ message: "URL set" });
 });
 
 export default app;

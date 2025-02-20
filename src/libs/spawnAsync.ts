@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 export type SpawnAsyncOutput = {
-  code: number;
+  code: number | null;
   output: string[];
 }
 
@@ -17,17 +17,7 @@ export const spawnAsync = (command: string, args?: string[]) => {
     });
     child.on("close", (code) => {
       let output = rawOutput.replaceAll("\r", "\n").split("\n").map((x) => x.trim()).filter((x) => x !== "");
-      if (code === 0) {
-        resolve({
-          code,
-          output
-        });
-      } else {
-        reject({
-          code,
-          output
-        });
-      }
+      resolve({ code, output});
     });
   });
 };

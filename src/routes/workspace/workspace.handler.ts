@@ -13,6 +13,7 @@ import {
 } from "./workspace.controller";
 import prisma from "../../libs/prisma";
 import { Workspace } from "@prisma/client";
+import namor from "namor"
 
 const app = new OpenAPIHono<Context>();
 
@@ -403,6 +404,7 @@ app.openapi(applicationCreateRoute, async (c) => {
       message: "Permission denied or workspace not found",
     }, 404);
   }
+  const getFreshURL = namor.generate();
   const application = await prisma.appication.create({
     data: {
       userId: user.id,
@@ -413,7 +415,8 @@ app.openapi(applicationCreateRoute, async (c) => {
       config: {},
       workspaceId: workspace.id,
       souceId: souce.id,
-      logs: []
+      logs: [],
+      url: getFreshURL,
     }
   })
   return c.json({

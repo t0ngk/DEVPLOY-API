@@ -60,6 +60,7 @@ model Appication {
   souceId     Int
   status      Status    @default(notStarted)
   logs        Json
+  url         String
 }
 
 model Database {

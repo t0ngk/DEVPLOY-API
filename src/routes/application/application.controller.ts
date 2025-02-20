@@ -51,11 +51,11 @@ export const editApplicationRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            name: z.string(),
-            github: z.string().url(),
-            branch: z.string(),
-            buildPack: z.string(),
-            souceId: z.string(),
+            name: z.string().min(1).optional(),
+            gitHub: z.string().url().optional(),
+            branch: z.string().optional(),
+            buildPack: z.string().optional(),
+            souceId: z.string().optional(),
           }),
         },
       },
@@ -124,6 +124,63 @@ export const deployApplicationRoute = createRoute({
   responses: {
     200: {
       description: "Application deployed",
-    }
-  }
-})
+    },
+  },
+});
+
+export const setURLApplicationRoute = createRoute({
+  method: "post",
+  path: "/:id/url",
+  summary: "Set URL Application",
+  description: "Set URL Application by id",
+  tags: ["Application"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            url: z.string().min(1),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Set URL Application Success",
+    },
+  },
+});
+
+export const disableApplicationRoute = createRoute({
+  method: "post",
+  path: "/:id/disable",
+  summary: "Disable Application",
+  description: "Disable Application by id",
+  tags: ["Application"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Application disabled",
+    },
+  },
+});

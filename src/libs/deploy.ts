@@ -7,7 +7,7 @@ import { CreateServiceOptions } from "dockerode";
 import { docker } from "./docker";
 import prisma from "./prisma";
 
-const createDynamicTraefikRule = (key: string, value: string) => {
+export const createDynamicTraefikRule = (key: string, value: string) => {
   const obj: {
     [key: string]: string;
   } = {};
@@ -117,7 +117,7 @@ COPY . /usr/share/nginx/html
 
   const traefikURL = createDynamicTraefikRule(
     `traefik.http.routers.devploy-app${application.id}.rule`,
-    `Host("app${application.id}.localhost")`
+    `Host("${application.url}.localhost")`
   );
   const traefikPort = createDynamicTraefikRule(
     `traefik.http.services.devploy-app${application.id}.loadbalancer.server.port`,
@@ -188,4 +188,19 @@ COPY . /usr/share/nginx/html
     await spawnAsync("rm", ["-rf", outputPath]);
     return false;
   }
+};
+
+export const disableApplication = async (appication: Prisma.AppicationGetPayload<{}>) => {
+  console.log("Disabling application", appication.id);
+  const serviceName = `devploy-${appication.id}`;
+  const isExistService = await docker.listServices({
+    filters: {
+      name: [serviceName],
+    },
+  });
+  if (isExistService.length > 0) {
+    await spawnAsync("docker", ["service", "rm", serviceName]);
+    return true;
+  }
+  return false;
 };
