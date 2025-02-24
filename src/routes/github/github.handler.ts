@@ -5,8 +5,11 @@ import prisma from "../../libs/prisma";
 import { githubAppAPI, githubAuth } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
 import { createOAuthUserAuth } from "@octokit/auth-app";
+import { errorHook } from "../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook
+});
 
 // https://github.com/apps/devploy-dev/installations/new/
 app.openapi(githubInstallCallbackRoute, async (c) => {

@@ -17,8 +17,11 @@ import {
 import { docker } from "../../libs/docker";
 import { spawnAsync } from "../../libs/spawnAsync";
 import { version } from "os";
+import { errorHook } from "../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook
+});
 
 app.openapi(getApplicationFromIdRoute, async (c) => {
   const user = c.get("user");

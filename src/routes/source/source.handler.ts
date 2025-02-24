@@ -10,8 +10,11 @@ import { githubAppAPI, githubAuth, githubUserAPI } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
 import { Source } from "./source.schema";
 import { components } from "@octokit/openapi-types";
+import { errorHook } from "../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook
+});
 
 app.openapi(getAllSourcesRoute, async (c) => {
   const souces = await prisma.souce.findMany({

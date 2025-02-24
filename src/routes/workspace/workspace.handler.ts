@@ -13,9 +13,12 @@ import {
 } from "./workspace.controller";
 import prisma from "../../libs/prisma";
 import { Workspace } from "@prisma/client";
-import namor from "namor"
+import namor from "namor";
+import { errorHook } from "../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook,
+});
 
 const getWorkspace = async (slug: string, userId: number) => {
   return await prisma.$transaction(async (tx) => {
@@ -65,7 +68,7 @@ app.openapi(getWorkspacesRoute, async (c) => {
         select: {
           role: true,
         },
-      }
+      },
     },
   });
   return c.json(workspaces);
@@ -364,30 +367,34 @@ app.openapi(deleteMemberRoute, async (c) => {
 
 app.openapi(applicationCreateRoute, async (c) => {
   const user = c.get("user");
-  const allApplications = await prisma.appication.count(
-    {
-      where: {
-        userId: user.id,
-      }
-    }
-  );
+  const allApplications = await prisma.appication.count({
+    where: {
+      userId: user.id,
+    },
+  });
   const isLimitReached = allApplications >= 5;
   if (isLimitReached) {
-    return c.json({
-      message: "You have reached the limit of applications",
-    }, 400);
+    return c.json(
+      {
+        message: "You have reached the limit of applications",
+      },
+      400
+    );
   }
   const body = await c.req.json();
   const souce = await prisma.souce.findFirst({
     where: {
       userId: user.id,
       installID: body.sourceId,
-    }
+    },
   });
   if (!souce) {
-    return c.json({
-      message: "Source not found",
-    }, 404);
+    return c.json(
+      {
+        message: "Source not found",
+      },
+      404
+    );
   }
   const workspace = await prisma.workspace.findFirst({
     where: {
@@ -400,9 +407,12 @@ app.openapi(applicationCreateRoute, async (c) => {
     },
   });
   if (!workspace) {
-    return c.json({
-      message: "Permission denied or workspace not found",
-    }, 404);
+    return c.json(
+      {
+        message: "Permission denied or workspace not found",
+      },
+      404
+    );
   }
   const getFreshURL = namor.generate();
   const application = await prisma.appication.create({
@@ -417,12 +427,12 @@ app.openapi(applicationCreateRoute, async (c) => {
       souceId: souce.id,
       logs: [],
       url: getFreshURL,
-    }
-  })
+    },
+  });
   return c.json({
     message: "Application created",
     applicationId: application.id,
   });
-})
+});
 
 export default app;

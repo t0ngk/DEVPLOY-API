@@ -8,8 +8,11 @@ import { generateCodeVerifier, generateState } from "arctic";
 import { getGoogleProfile, google } from "../../../libs/googleAuth";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import prisma from "../../../libs/prisma";
+import { errorHook } from "../../../libs/errorHook";
 
-const app = new OpenAPIHono();
+const app = new OpenAPIHono({
+  defaultHook: errorHook
+});
 
 app.openapi(googleLoginRoute, async (c) => {
   const state = generateState();

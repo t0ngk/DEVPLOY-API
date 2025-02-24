@@ -1,8 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { profileRoute } from "./profile.controller";
 import { Context } from "../../../libs/types/Context";
+import { errorHook } from "../../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook
+});
 
 app.openapi(profileRoute, async (c) => {
   // const token = c.req.header("Authorization")?.split(" ")[1];

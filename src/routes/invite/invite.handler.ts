@@ -6,8 +6,11 @@ import {
   getAllInviteRoute,
 } from "./invite.controller";
 import prisma from "../../libs/prisma";
+import { errorHook } from "../../libs/errorHook";
 
-const app = new OpenAPIHono<Context>();
+const app = new OpenAPIHono<Context>({
+  defaultHook: errorHook
+});
 
 app.openapi(getAllInviteRoute, async (c) => {
   const invites = await prisma.invite.findMany({
