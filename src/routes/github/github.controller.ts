@@ -3,10 +3,10 @@ import { githubGetRepoRequest, githubInstallAppRequest } from "./github.schema";
 import { isUserLoggedInByCookie } from "../../libs/middlewares/isUserLoggedInByCookie";
 import { isUserLoggedIn } from "../../libs/middlewares/isUserLoggedIn";
 
-export const githubInstallAppRoute = createRoute({
+export const githubInstallCallbackRoute = createRoute({
   method: "get",
   path: "/app",
-  summary: "Install GitHub App",
+  summary: "GitHub App Callback",
   description: "Install GitHub App to user's account",
   tags: ["GitHub"],
   middleware: [isUserLoggedInByCookie],
@@ -48,4 +48,17 @@ export const githubGetRepoRoute = createRoute({
       description: "Return GitHub Repo",
     },
   },
+});
+
+export const githubInstallAppRoute = createRoute({
+  method: "get",
+  path: "/install",
+  summary: "Install GitHub App",
+  description: "Install GitHub App to user's account",
+  tags: ["GitHub"],
+  responses: {
+    302: {
+      description: "Redirect to GitHub App",
+    },
+  }
 });

@@ -1,15 +1,15 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Context } from "../../libs/types/Context";
-import { githubGetRepoRoute, githubInstallAppRoute } from "./github.controller";
+import { githubGetRepoRoute, githubInstallAppRoute, githubInstallCallbackRoute } from "./github.controller";
 import prisma from "../../libs/prisma";
-import { githubAuth } from "../../libs/githubAuth";
+import { githubAppAPI, githubAuth } from "../../libs/githubAuth";
 import { Octokit } from "octokit";
 import { createOAuthUserAuth } from "@octokit/auth-app";
 
 const app = new OpenAPIHono<Context>();
 
 // https://github.com/apps/devploy-dev/installations/new/
-app.openapi(githubInstallAppRoute, async (c) => {
+app.openapi(githubInstallCallbackRoute, async (c) => {
   const { installation_id, setup_action, code } = c.req.query();
   console.log(installation_id, setup_action, code);
   const user = c.get("user");
@@ -95,6 +95,15 @@ app.openapi(githubGetRepoRoute, async (c) => {
   });
 
   return c.json(repos);
+});
+
+app.openapi(githubInstallAppRoute, async (c) => {
+  const githubApp = await githubAppAPI();
+  const { data } = await githubApp.rest.apps.getAuthenticated();
+  if (!data?.html_url) {
+    return c.json({ message: "Invalid GitHub App" }, 400);
+  }
+  return c.redirect(`${data.html_url}/installations/select_target`);
 });
 
 export default app;
