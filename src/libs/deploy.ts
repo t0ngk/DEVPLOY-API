@@ -7,6 +7,8 @@ import { CreateServiceOptions } from "dockerode";
 import { docker } from "./docker";
 import prisma from "./prisma";
 import { createNodeBuildpack, createStaticBuildpack } from "./buildPack";
+import { z } from "zod";
+import { JsonValue } from "@prisma/client/runtime/library";
 
 export const createDynamicTraefikRule = (key: string, value: string) => {
   const obj: {
@@ -14,6 +16,14 @@ export const createDynamicTraefikRule = (key: string, value: string) => {
   } = {};
   obj[key] = value;
   return obj;
+};
+
+export const getPortFromConfig = (config: JsonValue) => {
+  if (typeof config !== "object" || config === null || !("port" in config) || typeof config.port !== "string") {
+    return "80";
+  } else {
+    return config.port;
+  }
 };
 
 type ApplicationWithSource = Prisma.AppicationGetPayload<{
@@ -83,7 +93,15 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       dockerFile = createStaticBuildpack();
       break;
     case "nodejs":
-      dockerFile = createNodeBuildpack();
+      const validate = z.object({
+        installCommand: z.string(),
+        buildCommand: z.string(),
+        startCommand: z.string(),
+      }).safeParse(application.config);
+      if (!validate.success) {
+        throw new Error("Invalid config");
+      }
+      dockerFile = createNodeBuildpack(validate.data);
       break;
     default:
       throw new Error("Invalid build pack");
@@ -121,9 +139,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
     `traefik.http.routers.devploy-app${application.id}.rule`,
     `Host("${application.url}.localhost")`
   );
+  console.log(getPortFromConfig(application.config));
   const traefikPort = createDynamicTraefikRule(
     `traefik.http.services.devploy-app${application.id}.loadbalancer.server.port`,
-    "80"
+    getPortFromConfig(application.config)
   );
 
   const serviceOptions: CreateServiceOptions = {

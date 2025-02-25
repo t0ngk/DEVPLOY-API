@@ -4,16 +4,20 @@ COPY . /usr/share/nginx/html
 `;
 };
 
-export const createNodeBuildpack = (config?: { [key: string]: string }) => {
+export const createNodeBuildpack = (config: { [key: string]: string } = {
+  buildCommand: "npm run build",
+  installCommand: "npm install",
+  startCommand: "node build/index.js",
+}) => {
   return `FROM node as build
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install
+RUN ${config.installCommand}
 
 COPY . .
 
-RUN npm run build
+RUN ${config.buildCommand}
 
 FROM node as production
 WORKDIR /app
@@ -22,9 +26,7 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/build ./build
 COPY --from=build /app/node_modules ./node_modules
 
-EXPOSE 3000
-
 ENV NODE_ENV=production
-CMD [ "node", "build/index.js" ]
+CMD ${JSON.stringify(config.startCommand.split(" "))}
 `;
 };

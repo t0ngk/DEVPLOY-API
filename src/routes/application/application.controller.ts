@@ -56,6 +56,7 @@ export const editApplicationRoute = createRoute({
             branch: z.string().optional(),
             buildPack: z.string().optional(),
             souceId: z.string().optional(),
+            config: z.record(z.any()).optional(),
           }),
         },
       },
