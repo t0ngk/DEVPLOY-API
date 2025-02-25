@@ -6,6 +6,7 @@ import { writeFile } from "node:fs/promises";
 import { CreateServiceOptions } from "dockerode";
 import { docker } from "./docker";
 import prisma from "./prisma";
+import { createNodeBuildpack, createStaticBuildpack } from "./buildPack";
 
 export const createDynamicTraefikRule = (key: string, value: string) => {
   const obj: {
@@ -79,9 +80,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
 
   switch (application.buildPack) {
     case "static":
-      dockerFile = `FROM nginx:latest
-COPY . /usr/share/nginx/html
-`;
+      dockerFile = createStaticBuildpack();
+      break;
+    case "nodejs":
+      dockerFile = createNodeBuildpack();
       break;
     default:
       throw new Error("Invalid build pack");
