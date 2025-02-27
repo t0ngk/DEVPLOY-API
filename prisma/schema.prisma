@@ -64,12 +64,14 @@ model Appication {
 }
 
 model Database {
-  id          Int        @id @default(autoincrement())
-  name        String
-  images      String
-  config      Json
-  Workspace   Workspace? @relation(fields: [workspaceId], references: [id])
-  workspaceId Int?
+  id           Int        @id @default(autoincrement())
+  name         String
+  image        String
+  username     String
+  password     String
+  databaseName String
+  Workspace    Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId  Int?
 }
 
 model Permission {

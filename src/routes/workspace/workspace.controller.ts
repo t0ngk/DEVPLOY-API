@@ -335,3 +335,43 @@ export const applicationCreateRoute = createRoute({
     },
   },
 });
+
+export const databaseCreateRoute = createRoute({
+  method: "post",
+  path: "/:slug/database",
+  summary: "Create Database",
+  description: "Create Database",
+  tags: ["Database"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            name: z.string().min(1),
+            image: z.string(),
+            username: z.string().min(1),
+            password: z.string().min(1),
+            databaseName: z.string().min(1),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Return Database",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});

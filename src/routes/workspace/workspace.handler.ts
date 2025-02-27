@@ -3,6 +3,7 @@ import { Context } from "../../libs/types/Context";
 import {
   applicationCreateRoute,
   createWorkspaceRoute,
+  databaseCreateRoute,
   deleteInvitationRoute,
   deleteMemberRoute,
   deleteWorkspaceRoute,
@@ -432,6 +433,43 @@ app.openapi(applicationCreateRoute, async (c) => {
   return c.json({
     message: "Application created",
     applicationId: application.id,
+  });
+});
+
+app.openapi(databaseCreateRoute, async (c) => {
+  const user = c.get("user");
+  const body = await c.req.json();
+  const workspace = await prisma.workspace.findFirst({
+    where: {
+      slug: c.req.param("slug"),
+      Members: {
+        some: {
+          userId: user.id,
+        },
+      },
+    },
+  });
+  if (!workspace) {
+    return c.json(
+      {
+        message: "Permission denied or workspace not found",
+      },
+      404
+    );
+  }
+  const database = await prisma.database.create({
+    data: {
+      name: body.name,
+      image: body.image,
+      username: body.username,
+      password: body.password,
+      databaseName: body.databaseName,
+      workspaceId: workspace.id,
+    },
+  });
+  return c.json({
+    message: "Database created",
+    databaseId: database.id,
   });
 });
 

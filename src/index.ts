@@ -11,6 +11,7 @@ import workspaceRoute from "./routes/workspace/workspace.handler";
 import inviteRoute from "./routes/invite/invite.handler";
 import source from "./routes/source/source.handler";
 import application from "./routes/application/application.handler";
+import database from "./routes/database/database.handler";
 import { docker } from "./libs/docker";
 import { spawnAsync } from "./libs/spawnAsync";
 
@@ -50,6 +51,7 @@ async function main() {
   app.route("/invite", inviteRoute);
   app.route("/source", source);
   app.route("/application", application);
+  app.route("/database", database);
 
   const port = 3000;
 
