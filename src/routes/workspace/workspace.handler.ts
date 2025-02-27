@@ -111,7 +111,15 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
           },
         },
       },
-      Appication: true,
+      Appication: {
+        select: {
+          id: true,
+          name: true,
+          buildPack: true,
+          url: true,
+          status: true
+        }
+      },
       Database: true,
       Invite: {
         select: {
