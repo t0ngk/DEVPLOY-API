@@ -6,7 +6,9 @@ import {
   deleteDatabaseRoute,
   editDatabaseRoute,
   getDatabaseFromIdRoute,
+  startDatabaseRoute,
 } from "./database.controller";
+import { startDatabase } from "../../libs/deploy";
 
 const app = new OpenAPIHono<Context>({
   defaultHook: errorHook,
@@ -99,5 +101,29 @@ app.openapi(deleteDatabaseRoute, async (c) => {
   return c.json({ message: "Database deleted" });
 });
 
+app.openapi(startDatabaseRoute, async (c) => {
+  const user = c.get("user");
+  const id = parseInt(c.req.param("id"));
+  if (isNaN(id)) {
+    return c.json({ message: "Invalid id" }, 400);
+  }
+  const database = await prisma.database.findFirst({
+    where: {
+      id,
+      Workspace: {
+        Members: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    },
+  });
+  if (!database) {
+    return c.json({ message: "Database not found" }, 404);
+  }
+  startDatabase(database);
+  return c.json({ message: "Database deployment started" });
+})
 
 export default app;

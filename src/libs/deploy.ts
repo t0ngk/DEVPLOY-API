@@ -225,3 +225,59 @@ export const disableApplication = async (appication: Prisma.AppicationGetPayload
   }
   return false;
 };
+
+export const startDatabase = async (database: Prisma.DatabaseGetPayload<{}>) => {
+  console.log("Starting deployment for database", database.id);
+  const serviceName = `devploy-db-${database.id}`;
+
+  const serviceOptions: CreateServiceOptions = {
+    Name: serviceName,
+    TaskTemplate: {
+      ContainerSpec: {
+        Image: "postgres",
+        Env: [
+          `POSTGRES_USER=${database.username}`,
+          `POSTGRES_PASSWORD=${database.password}`,
+          `POSTGRES_DB=${database.name}`,
+        ],
+      },
+      Networks: [
+        {
+          Target: "traefik-public",
+          Aliases: [serviceName],
+        },
+      ],
+    },
+    Networks: [
+      {
+        Target: "traefik-public",
+        Aliases: [serviceName],
+      },
+    ],
+    Labels: {
+      "traefik.enable": "true",
+      "traefik.tcp.routers.devploy-db.rule": `HostSNI("*")`,
+      "traefik.tcp.routers.devploy-db.entrypoints": `postgres`,
+      "traefik.tcp.services.devploy-db.loadbalancer.server.port": "5432",
+    },
+  };
+
+  const isExistService = await docker.listServices({
+    filters: {
+      name: [serviceName],
+    },
+  });
+
+  if (isExistService.length > 0) {
+    await spawnAsync("docker", ["service", "rm", serviceName]);
+  }
+
+  try {
+    await docker.createService(serviceOptions);
+    console.log("Database deployed", database.id);
+    return true;
+  } catch (error) {
+    console.error("Database failed to deploy", database.id, error);
+    return false;
+  }
+}

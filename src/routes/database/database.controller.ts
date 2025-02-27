@@ -93,3 +93,30 @@ export const deleteDatabaseRoute = createRoute({
     },
   },
 });
+
+export const startDatabaseRoute = createRoute({
+  method: "post",
+  path: "/:id/start",
+  summary: "Start Database",
+  description: "Start Database by id",
+  tags: ["Database"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Database started",
+    },
+    404: {
+      description: "Database not found",
+    },
+  },
+});

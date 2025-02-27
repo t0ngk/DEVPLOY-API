@@ -7,19 +7,25 @@ services:
       - --log.level=INFO
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - --entrypoints.postgres.address=:5433
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --providers.docker.swarmmode=true
       - --providers.docker.network=traefik-public
       - --api
       - --api.dashboard=true
+      - --accesslog=true
+      - --accesslog.filepath=/var/log/traefik/access.log
+      - --accesslog.format=json
     ports:
       - '80:80'
       - '443:443'
+      - '5433:5433'
     networks:
       - traefik-public
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - '.:/var/log/traefik'
     deploy:
       labels:
         # Dashboard
