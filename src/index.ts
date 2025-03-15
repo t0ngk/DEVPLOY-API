@@ -107,22 +107,10 @@ async function main() {
   });
   
   if (isTraefikRunning.length == 0) {
-    console.log("Traefik is not running, Auto start traefik");
-    console.log("Deploying traefik");
-    const deployTraefik = await spawnAsync("docker", [
-      "stack",
-      "deploy",
-      "-c",
-      "traefik.yaml",
-      "devploy",
-    ]);
-    if (deployTraefik.code != 0) {
-      console.log("Error while deploying traefik");
-      console.log(deployTraefik.output.join("\n"));
-      process.exit(1);
-    } else {
-      console.log("Traefik deployed successfully");
-    }
+    console.log("Traefik is not running");
+    console.log("Please run traefik manually with below command");
+    console.log("docker stack deploy -c traefik.yml devploy");
+    process.exit(1);
   } else {
     console.log("Traefik is running");
   }
