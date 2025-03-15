@@ -12,18 +12,21 @@ datasource db {
 }
 
 model User {
-  id         Int               @id @default(autoincrement())
-  studentId  String            @unique
-  firstName  String
-  lastName   String
-  email      String            @unique
-  picture    String?
-  role       Role              @default(MEMBER)
-  souce      Souce[]
-  Permission Permission[]
-  Appication Appication[]
-  Workspaces UserOfWorkspace[]
-  Invite     Invite[]
+  id               Int               @id @default(autoincrement())
+  studentId        String            @unique
+  firstName        String
+  lastName         String
+  email            String            @unique
+  picture          String?
+  role             Role              @default(MEMBER)
+  souce            Souce[]
+  Permission       Permission[]
+  Appication       Appication[]
+  Workspaces       UserOfWorkspace[]
+  Invite           Invite[]
+  Database         Database[]
+  applicationQuota Int               @default(5)
+  databaseQuota    Int               @default(2)
 }
 
 model Souce {
@@ -70,6 +73,9 @@ model Database {
   username     String
   password     String
   databaseName String
+  port         Int
+  createBy     User       @relation(fields: [userId], references: [id])
+  userId       Int
   Workspace    Workspace? @relation(fields: [workspaceId], references: [id])
   workspaceId  Int?
 }
@@ -98,6 +104,15 @@ model Invite {
   workspaceId Int
   toUser      User?     @relation(fields: [toUserId], references: [id])
   toUserId    Int?
+}
+
+model Setting {
+  id                     Int    @id @default(autoincrement())
+  baseUrl                String @default("localhost")
+  reservePort            Int    @default(5000)
+  reservePortEnd         Int    @default(6000)
+  defaultApplictionQuota Int    @default(5)
+  defaultDatabaseQuota   Int    @default(2)
 }
 
 enum Role {
