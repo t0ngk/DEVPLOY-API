@@ -238,7 +238,7 @@ export const startDatabase = async (database: Prisma.DatabaseGetPayload<{}>) => 
         Env: [
           `POSTGRES_USER=${database.username}`,
           `POSTGRES_PASSWORD=${database.password}`,
-          `POSTGRES_DB=${database.name}`,
+          `POSTGRES_DB=${database.databaseName}`,
         ],
       },
       Networks: [
@@ -255,10 +255,7 @@ export const startDatabase = async (database: Prisma.DatabaseGetPayload<{}>) => 
       },
     ],
     Labels: {
-      "traefik.enable": "true",
-      "traefik.tcp.routers.devploy-db.rule": `HostSNI("*")`,
-      "traefik.tcp.routers.devploy-db.entrypoints": `postgres`,
-      "traefik.tcp.services.devploy-db.loadbalancer.server.port": "5432",
+      "traefik.enable": "false",
     },
   };
 

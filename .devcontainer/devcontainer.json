@@ -8,7 +8,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/git-lfs:1": {},
 		"ghcr.io/devcontainers/features/node:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker": {}
+		"ghcr.io/ghcr.io/devcontainers/features/docker-outside-of-docker": {}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -18,8 +18,6 @@
 	// This can be used to network with other containers or with the host.
 	
 	"forwardPorts": [
-		80,
-		443,
 		3000,
 		5432
 	],
