@@ -16,6 +16,7 @@ export const profileResponse = z
     firstName: z.string(),
     lastName: z.string(),
     picture: z.string().url().nullable(),
+    role: z.enum(["OWNER", "USER"]),
   })
   .openapi("User profile", {
     title: "User profile",
@@ -25,5 +26,6 @@ export const profileResponse = z
       firstName: "John",
       lastName: "Doe",
       picture: "https://lh3.googleusercontent.com/a/.....",
+      role: "OWNER",
     },
   });

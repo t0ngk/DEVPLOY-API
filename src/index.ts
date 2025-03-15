@@ -12,8 +12,10 @@ import inviteRoute from "./routes/invite/invite.handler";
 import source from "./routes/source/source.handler";
 import application from "./routes/application/application.handler";
 import database from "./routes/database/database.handler";
+import setting from "./routes/setting/setting.handler";
 import { docker } from "./libs/docker";
 import { spawnAsync } from "./libs/spawnAsync";
+import prisma from "./libs/prisma";
 
 const app = new OpenAPIHono();
 
@@ -52,14 +54,16 @@ async function main() {
   app.route("/source", source);
   app.route("/application", application);
   app.route("/database", database);
+  app.route("/setting", setting);
 
   const port = 3000;
-
 
   console.log("Check is docker swarm is initialized");
   const isSwarmInitialized = await docker.info();
   if (!isSwarmInitialized.Swarm.LocalNodeState) {
-    console.log("Docker swarm is not initialized, Auto initialize docker swarm");
+    console.log(
+      "Docker swarm is not initialized, Auto initialize docker swarm"
+    );
     const initSwarm = await spawnAsync("docker", ["swarm", "init"]);
     if (initSwarm.code != 0) {
       console.log("Error while initializing docker swarm");
@@ -98,14 +102,13 @@ async function main() {
     console.log("Traefik network already exist");
   }
 
-
   console.log("Check is traefik running");
   const isTraefikRunning = await docker.listServices({
     filters: {
       name: ["devploy_traefik"],
     },
   });
-  
+
   if (isTraefikRunning.length == 0) {
     console.log("Traefik is not running");
     console.log("Please run traefik manually with below command");
@@ -113,6 +116,21 @@ async function main() {
     process.exit(1);
   } else {
     console.log("Traefik is running");
+  }
+
+  console.log("Is Devploy Setting initialized");
+  const isDevploySetting = await prisma.setting.findFirst({});
+
+  if (isDevploySetting) {
+    console.log("Devploy Setting already initialized");
+  } else {
+    console.log(
+      "Devploy Setting not initialized, Auto initialize Devploy Setting"
+    );
+    await prisma.setting.create({
+      data: {},
+    });
+    console.log("Devploy Setting initialized successfully");
   }
 
   console.log(`Server is running on port ${port}\n`);
