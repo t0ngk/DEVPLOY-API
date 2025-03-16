@@ -10,13 +10,11 @@ import {
 } from "./application.controller";
 import prisma from "../../libs/prisma";
 import {
-  createDynamicTraefikRule,
   deployApplication,
   disableApplication,
 } from "../../libs/deploy";
 import { docker } from "../../libs/docker";
 import { spawnAsync } from "../../libs/spawnAsync";
-import { version } from "os";
 import { errorHook } from "../../libs/errorHook";
 
 const app = new OpenAPIHono<Context>({

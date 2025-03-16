@@ -13,6 +13,7 @@ import source from "./routes/source/source.handler";
 import application from "./routes/application/application.handler";
 import database from "./routes/database/database.handler";
 import setting from "./routes/setting/setting.handler";
+import dashboard from "./routes/dashboard/dashboard.handler";
 import { docker } from "./libs/docker";
 import { spawnAsync } from "./libs/spawnAsync";
 import prisma from "./libs/prisma";
@@ -55,6 +56,7 @@ async function main() {
   app.route("/application", application);
   app.route("/database", database);
   app.route("/setting", setting);
+  app.route("/dashboard", dashboard);
 
   const port = 3000;
 

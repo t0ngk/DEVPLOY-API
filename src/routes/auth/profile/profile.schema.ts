@@ -4,7 +4,7 @@ export const profileRequest = z.object({
   authorization: z.string().openapi({
     param: {
       in: "header",
-      name: "authorization"
+      name: "authorization",
     },
   }),
 });
@@ -16,7 +16,9 @@ export const profileResponse = z
     firstName: z.string(),
     lastName: z.string(),
     picture: z.string().url().nullable(),
-    role: z.enum(["OWNER", "USER"]),
+    role: z.enum(["OWNER", "ADMIN", "USER"]),
+    applicationQuota: z.number(),
+    databaseQuota: z.number(),
   })
   .openapi("User profile", {
     title: "User profile",
@@ -27,5 +29,7 @@ export const profileResponse = z
       lastName: "Doe",
       picture: "https://lh3.googleusercontent.com/a/.....",
       role: "OWNER",
+      applicationQuota: 10,
+      databaseQuota: 10,
     },
   });

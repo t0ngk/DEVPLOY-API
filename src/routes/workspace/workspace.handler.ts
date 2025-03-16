@@ -117,8 +117,8 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
           name: true,
           buildPack: true,
           url: true,
-          status: true
-        }
+          status: true,
+        },
       },
       Database: true,
       Invite: {
@@ -376,12 +376,21 @@ app.openapi(deleteMemberRoute, async (c) => {
 
 app.openapi(applicationCreateRoute, async (c) => {
   const user = c.get("user");
+  const setting = await prisma.setting.findFirst();
+  if (!setting) {
+    return c.json(
+      {
+        message: "Setting not found",
+      },
+      404
+    );
+  }
   const allApplications = await prisma.appication.count({
     where: {
       userId: user.id,
     },
   });
-  const isLimitReached = allApplications >= 5;
+  const isLimitReached = allApplications >= user.applicationQuota;
   if (isLimitReached) {
     return c.json(
       {
@@ -447,6 +456,50 @@ app.openapi(applicationCreateRoute, async (c) => {
 app.openapi(databaseCreateRoute, async (c) => {
   const user = c.get("user");
   const body = await c.req.json();
+  const setting = await prisma.setting.findFirst();
+  if (!setting) {
+    return c.json(
+      {
+        message: "Setting not found",
+      },
+      404
+    );
+  }
+  const portRange = Array.from(
+    { length: setting.reservePortEnd - setting.reservePort },
+    (_, i) => i + setting.reservePort
+  );
+  const usedPort = await prisma.database.findMany({
+    select: {
+      port: true,
+    },
+  });
+  const availablePort = portRange.filter((port) => {
+    return !usedPort.some((used) => used.port === port);
+  });
+  if (availablePort.length === 0) {
+    return c.json(
+      {
+        message: "No available port please contact admin",
+      },
+      400
+    );
+  }
+  const port = availablePort[0];
+  const allDatabase = await prisma.database.count({
+    where: {
+      userId: user.id,
+    },
+  });
+  const isLimitReached = allDatabase >= user.databaseQuota;
+  if (isLimitReached) {
+    return c.json(
+      {
+        message: "You have reached the limit of databases",
+      },
+      400
+    );
+  }
   const workspace = await prisma.workspace.findFirst({
     where: {
       slug: c.req.param("slug"),
@@ -473,6 +526,8 @@ app.openapi(databaseCreateRoute, async (c) => {
       password: body.password,
       databaseName: body.databaseName,
       workspaceId: workspace.id,
+      userId: user.id,
+      port: port,
     },
   });
   return c.json({
