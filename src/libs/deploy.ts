@@ -41,6 +41,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       status: "inProgress",
     },
   });
+  const setting = await prisma.setting.findFirst();
+  if (!setting) {
+    throw new Error("Setting not found");
+  }
   console.log("Starting deployment for application", application.id);
   const gitHubInstallID = parseInt(application.Souce?.installID || "");
   if (isNaN(gitHubInstallID)) {
@@ -137,7 +141,7 @@ export const deployApplication = async (application: ApplicationWithSource) => {
 
   const traefikURL = createDynamicTraefikRule(
     `traefik.http.routers.devploy-app${application.id}.rule`,
-    `Host("${application.url}.localhost")`
+    `Host("${application.url}.${setting.baseUrl}")`
   );
   console.log(getPortFromConfig(application.config));
   const traefikPort = createDynamicTraefikRule(

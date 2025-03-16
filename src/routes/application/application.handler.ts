@@ -9,16 +9,13 @@ import {
   setURLApplicationRoute,
 } from "./application.controller";
 import prisma from "../../libs/prisma";
-import {
-  deployApplication,
-  disableApplication,
-} from "../../libs/deploy";
+import { deployApplication, disableApplication } from "../../libs/deploy";
 import { docker } from "../../libs/docker";
 import { spawnAsync } from "../../libs/spawnAsync";
 import { errorHook } from "../../libs/errorHook";
 
 const app = new OpenAPIHono<Context>({
-  defaultHook: errorHook
+  defaultHook: errorHook,
 });
 
 app.openapi(getApplicationFromIdRoute, async (c) => {
@@ -232,6 +229,10 @@ app.openapi(disableApplicationRoute, async (c) => {
 app.openapi(setURLApplicationRoute, async (c) => {
   const user = c.get("user");
   const id = parseInt(c.req.param("id"));
+  const setting = await prisma.setting.findFirst();
+  if (!setting) {
+    return c.json({ message: "Setting not found" }, 404);
+  }
   if (isNaN(id)) {
     return c.json({ message: "Invalid id format" }, 400);
   }
@@ -280,7 +281,7 @@ app.openapi(setURLApplicationRoute, async (c) => {
       "service",
       "update",
       "--label-add",
-      `traefik.http.routers.devploy-app${id}.rule=Host("${body.url}.localhost")`,
+      `traefik.http.routers.devploy-app${id}.rule=Host("${body.url}.${setting.baseUrl}")`,
       `devploy-${id}`,
     ]);
   }
