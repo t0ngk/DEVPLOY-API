@@ -120,3 +120,33 @@ export const startDatabaseRoute = createRoute({
     },
   },
 });
+
+export const stopDatabaseRoute = createRoute({
+  method: "post",
+  path: "/:id/stop",
+  summary: "Stop Database",
+  description: "Stop Database by id",
+  tags: ["Database"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Database stopped",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Database not found",
+    },
+  },
+});
