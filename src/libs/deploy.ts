@@ -31,6 +31,18 @@ export const getPortFromConfig = (config: JsonValue) => {
   }
 };
 
+export const getEnvFromConfig = (config: JsonValue) => {
+  if (
+    typeof config !== "object" ||
+    config === null ||
+    !("env" in config) ||
+    typeof config.env !== "object"
+  ) {
+    return [];
+  }
+  return config.env as string[];
+};
+
 type ApplicationWithSource = Prisma.AppicationGetPayload<{
   include: {
     Souce: true;
@@ -156,11 +168,14 @@ export const deployApplication = async (application: ApplicationWithSource) => {
     getPortFromConfig(application.config)
   );
 
+  const loadEnv = getEnvFromConfig(application.config);
+
   const serviceOptions: CreateServiceOptions = {
     Name: serviceName,
     TaskTemplate: {
       ContainerSpec: {
         Image: serviceName,
+        Env: loadEnv
       },
       Networks: [
         {
