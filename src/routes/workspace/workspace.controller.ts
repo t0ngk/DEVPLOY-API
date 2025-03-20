@@ -161,6 +161,37 @@ export const deleteWorkspaceRoute = createRoute({
   },
 });
 
+export const leaveWorkspaceRoute = createRoute({
+  method: "delete",
+  path: "/:slug/leave",
+  summary: "Leave Workspace",
+  description: "Leave Workspace",
+  tags: ["Workspace"],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
+  request: {
+    params: z.object({
+      slug: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Workspace left",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Permission denied or workspace not found",
+    },
+  },
+});
+
+
 export const sentInvaitationRoute = createRoute({
   method: "post",
   path: "/:slug/invite",

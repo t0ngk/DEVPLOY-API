@@ -9,6 +9,7 @@ import {
   deleteWorkspaceRoute,
   getWorkspaceBySlugRoute,
   getWorkspacesRoute,
+  leaveWorkspaceRoute,
   renameWorkspaceRoute,
   sentInvaitationRoute,
 } from "./workspace.controller";
@@ -252,6 +253,44 @@ app.openapi(deleteWorkspaceRoute, async (c) => {
   });
   return c.json({
     message: "Workspace deleted",
+  });
+});
+
+app.openapi(leaveWorkspaceRoute, async (c) => {
+  const slug = c.req.param("slug");
+  const workspace: Workspace | null = await getWorkspace(
+    slug,
+    c.get("user").id
+  );
+  if (!workspace) {
+    return c.json({ message: "Permission denied or workspace not found" }, 404);
+  }
+  const permission = await prisma.permission.findFirst({
+    where: {
+      userId: c.get("user").id,
+      workspaceId: workspace.id,
+      role: "OWNER",
+    },
+  });
+  if (permission) {
+    return c.json({ message: "Owner can't leave workspace" }, 409);
+  }
+  await prisma.$transaction([
+    prisma.userOfWorkspace.deleteMany({
+      where: {
+        userId: c.get("user").id,
+        workspaceId: workspace.id,
+      },
+    }),
+    prisma.permission.deleteMany({
+      where: {
+        userId: c.get("user").id,
+        workspaceId: workspace.id,
+      },
+    }),
+  ]);
+  return c.json({
+    message: "Workspace leaved",
   });
 });
 
