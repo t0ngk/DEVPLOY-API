@@ -145,6 +145,18 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       fs.writeFileSync(`./app/${application.id}/build.log`, data.replaceAll("\r", "\n"), { flag: "a" });
     });
     logs.push(...buildOutput.output);
+    if (buildOutput.code === 1) {
+      await prisma.appication.update({
+        where: {
+          id: application.id,
+        },
+        data: {
+          status: "Failed",
+          logs: logs,
+        },
+      });
+      throw new Error("Failed to build");
+    }
   } catch (error) {
     if ((error as SpawnAsyncOutput).output) {
       const errorOutput = error as SpawnAsyncOutput;

@@ -24,22 +24,6 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
   if (isNaN(id)) {
     return c.json({ message: "Invalid id" }, 400);
   }
-  const isApplicationRunningInDocker = await docker.listServices({
-    filters: {
-      name: [`devploy-${id}`],
-    },
-  });
-
-  if (isApplicationRunningInDocker.length == 0) {
-    await prisma.appication.update({
-      where: {
-        id,
-      },
-      data: {
-        status: "notStarted",
-      },
-    });
-  }
 
   const application = await prisma.appication.findFirst({
     where: {
@@ -69,6 +53,26 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
       },
     },
   });
+  
+  const isApplicationRunningInDocker = await docker.listServices({
+    filters: {
+      name: [`devploy-${id}`],
+    },
+    status: true,
+  });
+
+  if (isApplicationRunningInDocker.length > 0 &&
+    (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) > 0 && application?.status !== "inProgress" && application?.status !== "Failed") {
+    await prisma.appication.update({
+      where: {
+        id,
+      },
+      data: {
+        status: "notStarted",
+      },
+    });
+  }
+
   if (!application) {
     return c.json(
       { message: "Application not found or user is not in the application" },
