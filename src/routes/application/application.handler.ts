@@ -53,7 +53,7 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
       },
     },
   });
-  
+
   const isApplicationRunningInDocker = await docker.listServices({
     filters: {
       name: [`devploy-${id}`],
@@ -61,8 +61,12 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
     status: true,
   });
 
-  if (isApplicationRunningInDocker.length > 0 &&
-    (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) > 0 && application?.status !== "inProgress" && application?.status !== "Failed") {
+  if (
+    isApplicationRunningInDocker.length > 0 &&
+    (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) > 0 &&
+    application?.status !== "inProgress" &&
+    application?.status !== "Failed"
+  ) {
     await prisma.appication.update({
       where: {
         id,
