@@ -86,6 +86,39 @@ async function main() {
     })
   );
 
+  app.get('/application/:id/status', upgradeWebSocket(async (c) => {
+    let status: string | null = null;
+    const cleanUpStatus = setInterval(async () => {
+      const application = await prisma.appication.findFirst({
+        where: {
+          id: parseInt(c.req.param("id")),
+        },
+        select: {
+          status: true,
+        },
+      })
+      status = application?.status || null;
+    },1000)
+    let cleanUpSender: NodeJS.Timeout | null = null
+    return {
+      onOpen: async (evt, ws) => {
+        let oldStatus: string | null = null;
+        cleanUpSender = setInterval(() => {
+          if (status != null && status != oldStatus) {
+            oldStatus = status;
+            ws.send(status);
+          }
+        }, 1000);
+      },
+      onClose: () => {
+        clearInterval(cleanUpStatus);
+        if (cleanUpSender) {
+          clearInterval(cleanUpSender);
+        }
+      }
+    }
+  }))
+
   app.use(logger());
   app.use(cors());
 
