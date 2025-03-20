@@ -9,6 +9,7 @@ import prisma from "./prisma";
 import { createNodeBuildpack, createStaticBuildpack } from "./buildPack";
 import { z } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
+import fs from "fs";
 
 export const createDynamicTraefikRule = (key: string, value: string) => {
   const obj: {
@@ -73,7 +74,7 @@ export const deployApplication = async (application: ApplicationWithSource) => {
     `https://oauth2:${token}@`
   );
   const logs: string[] = [];
-  const outputPath = `./app/${application.name}`;
+  const outputPath = `./app/${application.id}`;
 
   try {
     await spawnAsync("rm", ["-rf", outputPath]);
@@ -84,7 +85,9 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       cloneUrl,
       outputPath,
       "--progress",
-    ]);
+    ], (data) => {
+      fs.writeFileSync(`./app/${application.id}/build.log`, data.replaceAll("\r", "\n"), { flag: "a" });
+    });
 
     logs.push(...gitClone.output);
   } catch (error) {
@@ -138,7 +141,9 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       "-t",
       serviceName,
       outputPath,
-    ]);
+    ], (data) => {
+      fs.writeFileSync(`./app/${application.id}/build.log`, data.replaceAll("\r", "\n"), { flag: "a" });
+    });
     logs.push(...buildOutput.output);
   } catch (error) {
     if ((error as SpawnAsyncOutput).output) {

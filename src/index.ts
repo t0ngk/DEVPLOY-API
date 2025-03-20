@@ -21,8 +21,10 @@ import { CronJob } from "cron";
 import fs from "fs";
 import { TraefikLog } from "./libs/types/TraefikLog";
 import { disableApplication } from "./libs/deploy";
+import { createNodeWebSocket } from "@hono/node-ws";
 
 const app = new OpenAPIHono();
+const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 async function main() {
   app.openAPIRegistry.registerComponent("securitySchemes", "GoogleOAuthJWT", {
@@ -46,6 +48,41 @@ async function main() {
       spec: {
         url: "/openapi.json",
       },
+    })
+  );
+
+  app.get(
+    "/log/build/:id",
+    upgradeWebSocket(async (c) => {
+      let fileWatcher: fs.StatWatcher;
+
+      return {
+        onOpen: async (evt, ws) => {
+          if (!fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
+            console.log("Create build log file");
+            fs.mkdirSync(
+              `./app/${c.req.param("id")}`,
+              {
+                recursive: true,
+              }
+            );
+            fs.writeFileSync(`./app/${c.req.param("id")}/build.log`, "", {});
+          }
+          fileWatcher = fs.watchFile(`./app/${c.req.param("id")}/build.log`, {interval: 10}, (curr, prev) => {
+            if (fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {            
+              const log = fs.readFileSync(
+                `./app/${c.req.param("id")}/build.log`,
+                "utf-8"
+              );
+              ws.send(log);
+            }
+          });
+        },
+        onClose() {
+          fileWatcher.removeAllListeners();
+          console.log("closed");
+        }
+      }
     })
   );
 
@@ -142,10 +179,11 @@ async function main() {
   console.log(`Server is running on port ${port}\n`);
   showRoutes(app);
 
-  serve({
+  const server = serve({
     fetch: app.fetch,
     port,
   });
+  injectWebSocket(server);
 
   new CronJob(
     "* * * * * 1",

@@ -5,15 +5,17 @@ export type SpawnAsyncOutput = {
   output: string[];
 }
 
-export const spawnAsync = (command: string, args?: string[]) => {
+export const spawnAsync = (command: string, args?: string[], onData?: (data:string) => void) => {
   return new Promise<SpawnAsyncOutput>((resolve, reject) => {
     const child = spawn(command, args ?? []);
     let rawOutput = "";
     child.stdout?.on("data", (data) => {
       rawOutput += data.toString();
+      onData?.(data.toString());
     });
     child.stderr?.on("data", (data) => {
       rawOutput += data.toString();
+      onData?.(data.toString());
     });
     child.on("close", (code) => {
       let output = rawOutput.replaceAll("\r", "\n").split("\n").map((x) => x.trim()).filter((x) => x !== "");
