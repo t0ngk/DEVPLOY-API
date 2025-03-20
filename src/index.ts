@@ -151,6 +151,7 @@ async function main() {
     "* * * * * 1",
     async () => {
       if (fs.existsSync("access.log")) {
+        console.log("Checking for inactive applications");
         const accessLog = fs.readFileSync("access.log", "utf-8");
         const rawLogs = accessLog.split("\n").filter((log) => log != "");
         const jsonLogs = rawLogs.map((log) => JSON.parse(log) as TraefikLog);
