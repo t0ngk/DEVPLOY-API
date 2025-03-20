@@ -22,6 +22,7 @@ import fs from "fs";
 import { TraefikLog } from "./libs/types/TraefikLog";
 import { disableApplication } from "./libs/deploy";
 import { createNodeWebSocket } from "@hono/node-ws";
+import { spawn } from "child_process";
 
 const app = new OpenAPIHono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
@@ -85,6 +86,26 @@ async function main() {
       }
     })
   );
+
+  app.get("/log/func/:id", upgradeWebSocket(async (c) => {
+    const logSpawn = spawn("docker", ["service", "logs", "--raw" , "-f" , `devploy-${c.req.param("id")}`]);
+    return {
+      onOpen(evt, ws) {
+        let logs = "";
+        logSpawn.stdout?.on("data", (data) => {
+          logs += data.toString();
+          ws.send(logs);
+        });
+        logSpawn.stderr?.on("data", (data) => {
+          logs += data.toString();
+          ws.send(logs);
+        });
+      },
+      onClose() {
+        logSpawn.kill();
+      }
+    }
+  }))
 
   app.get('/application/:id/status', upgradeWebSocket(async (c) => {
     let status: string | null = null;
