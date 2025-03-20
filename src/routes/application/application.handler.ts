@@ -61,8 +61,6 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
     status: true,
   });
 
-  console.log(isApplicationRunningInDocker);
-
   if (
     isApplicationRunningInDocker.length > 0 &&
     (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) == 0 &&
