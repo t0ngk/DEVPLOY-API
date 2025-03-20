@@ -220,7 +220,7 @@ app.openapi(disableApplicationRoute, async (c) => {
   if (!application) {
     return c.json({ message: "Application not found" }, 404);
   }
-  if (await disableApplication(application)) {
+  if (await disableApplication(application.id)) {
     return c.json({ message: "Application disabled" });
   }
   return c.json({ message: "Failed to disable application" }, 500);

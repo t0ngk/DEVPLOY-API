@@ -238,10 +238,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
 };
 
 export const disableApplication = async (
-  appication: Prisma.AppicationGetPayload<{}>
+  appicationId: number
 ) => {
-  console.log("Disabling application", appication.id);
-  const serviceName = `devploy-${appication.id}`;
+  console.log("Disabling application", appicationId);
+  const serviceName = `devploy-${appicationId}`;
   const isExistService = await docker.listServices({
     filters: {
       name: [serviceName],

@@ -17,6 +17,10 @@ import dashboard from "./routes/dashboard/dashboard.handler";
 import { docker } from "./libs/docker";
 import { spawnAsync } from "./libs/spawnAsync";
 import prisma from "./libs/prisma";
+import { CronJob } from "cron";
+import fs from "fs";
+import { TraefikLog } from "./libs/types/TraefikLog";
+import { disableApplication } from "./libs/deploy";
 
 const app = new OpenAPIHono();
 
@@ -142,6 +146,63 @@ async function main() {
     fetch: app.fetch,
     port,
   });
+
+  new CronJob(
+    "* * * * * 1",
+    async () => {
+      if (fs.existsSync("access.log")) {
+        const accessLog = fs.readFileSync("access.log", "utf-8");
+        const rawLogs = accessLog.split("\n").filter((log) => log != "");
+        const jsonLogs = rawLogs.map((log) => JSON.parse(log) as TraefikLog);
+        const filteredLogs = jsonLogs.filter((log) => {
+          const requestTime = new Date(log.StartUTC);
+          const now = new Date();
+          const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
+          return requestTime > sevenDaysAgo;
+        });
+        const removedDupeLogs = filteredLogs.filter((log, index, self) => {
+          return (
+            index === self.findIndex((t) => t.ServiceName === log.ServiceName)
+          );
+        });
+        const formattedLogs = removedDupeLogs.map((log) =>
+          parseInt(log.ServiceName.replaceAll(/[^0-9]/g, ""))
+        );
+        const applications = await prisma.appication.findMany({
+          where: {
+            NOT: {
+              id: {
+                in: formattedLogs,
+              },
+            },
+            status: "Deployed",
+          },
+          select: {
+            id: true,
+          },
+        });
+        for (const application of applications) {
+          disableApplication(application.id);
+        }
+        await prisma.appication.updateMany({
+          where: {
+            NOT: {
+              id: {
+                in: formattedLogs,
+              },
+            },
+            status: "Deployed",
+          },
+          data: {
+            status: "notStarted",
+          },
+        });
+        fs.writeFileSync("access.log", "");
+      }
+    },
+    null,
+    true
+  );
 }
 
 main();
