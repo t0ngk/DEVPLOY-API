@@ -59,29 +59,41 @@ async function main() {
 
       return {
         onOpen: async (evt, ws) => {
-          if (!fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
-            console.log("Create build log file");
-            fs.mkdirSync(
-              `./app/${c.req.param("id")}`,
-              {
-                recursive: true,
-              }
-            );
-            fs.writeFileSync(`./app/${c.req.param("id")}/build.log`, "", {});
-          }
-          fileWatcher = fs.watchFile(`./app/${c.req.param("id")}/build.log`, {interval: 10}, (curr, prev) => {
-            if (fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {            
-              const log = fs.readFileSync(
-                `./app/${c.req.param("id")}/build.log`,
-                "utf-8"
-              );
-              ws.send(log);
-            }
+          const application = await prisma.appication.findFirst({
+            where: {
+              id: parseInt(c.req.param("id")),
+            },
+            select: {
+              logs: true,
+              status: true,
+            },
           });
+          if (application && application.status == "Deployed") {
+            ws.send((application.logs as string[]).join("\n"));
+          } else {
+            if (!fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
+              console.log("Create build log file");
+              fs.mkdirSync(
+                `./app/${c.req.param("id")}`,
+                {
+                  recursive: true,
+                }
+              );
+              fs.writeFileSync(`./app/${c.req.param("id")}/build.log`, "", {});
+            }
+            fileWatcher = fs.watchFile(`./app/${c.req.param("id")}/build.log`, {interval: 10}, (curr, prev) => {
+              if (fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {            
+                const log = fs.readFileSync(
+                  `./app/${c.req.param("id")}/build.log`,
+                  "utf-8"
+                );
+                ws.send(log);
+              }
+            });
+          }
         },
         onClose() {
-          fileWatcher.removeAllListeners();
-          console.log("closed");
+          fileWatcher?.removeAllListeners();
         }
       }
     })
