@@ -186,6 +186,7 @@ async function main() {
       "create",
       "--driver",
       "overlay",
+      "--attachable",
       "traefik-public",
     ]);
     if (createTraefikNetwork.code != 0) {

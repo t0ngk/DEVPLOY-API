@@ -6,13 +6,18 @@ services:
       NODE_ENV: production
     volumes:
       - //var/run/docker.sock:/var/run/docker.sock
+      - devploy_traefik-log:/usr/src/
     ports:
-      - 3000:3000
       - 5555:5555
     networks:
       - devploy-network
+      - traefik-public
     depends_on:
       - postgres
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.http.routers.devploy-api.rule=Host(`api.localhost`)'
+      - 'traefik.http.services.devploy-api.loadbalancer.server.port=3000'
 
   postgres:
     image: postgres:latest
@@ -28,7 +33,10 @@ services:
 
 volumes:
   postgres-data:
+  devploy_traefik-log:
 
 networks:
   devploy-network:
     driver: bridge
+  traefik-public:
+    external: true
