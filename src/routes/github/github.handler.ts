@@ -28,7 +28,7 @@ app.openapi(githubInstallCallbackRoute, async (c) => {
       },
     });
   }
-  return c.redirect("http://localhost:5173");
+  return c.redirect(process.env.BASE_URL);
 });
 
 app.openapi(githubGetRepoRoute, async (c) => {

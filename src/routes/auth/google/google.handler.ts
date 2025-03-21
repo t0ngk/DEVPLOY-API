@@ -115,7 +115,7 @@ app.openapi(googleCallbackRoute, async (c) => {
   }
   deleteCookie(c, "codeVerifier");
   deleteCookie(c, "state");
-  return c.redirect("http://localhost:5173");
+  return c.redirect(process.env.BASE_URL);
 });
 
 app.openapi(googleRefreshTokenRoute, async (c) => {
