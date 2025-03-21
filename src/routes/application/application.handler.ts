@@ -261,7 +261,7 @@ app.openapi(setURLApplicationRoute, async (c) => {
     return c.json({ message: "Application not found" }, 404);
   }
   let body = await c.req.json();
-  if (body.url == "traefik") {
+  if (body.url == "api") {
     return c.json({ message: "this url has been restict" }, 400);
   }
   const urlExists = await prisma.appication.findFirst({
