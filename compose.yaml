@@ -6,7 +6,7 @@ services:
       NODE_ENV: production
     volumes:
       - //var/run/docker.sock:/var/run/docker.sock
-      - devploy_traefik-log:/usr/src/
+      - ./access.log:/usr/src/app/access.log
     ports:
       - 5555:5555
     networks:
@@ -33,7 +33,6 @@ services:
 
 volumes:
   postgres-data:
-  devploy_traefik-log:
 
 networks:
   devploy-network:
