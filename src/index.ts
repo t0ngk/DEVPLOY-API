@@ -73,84 +73,97 @@ async function main() {
           } else {
             if (!fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
               console.log("Create build log file");
-              fs.mkdirSync(
-                `./app/${c.req.param("id")}`,
-                {
-                  recursive: true,
-                }
-              );
+              fs.mkdirSync(`./app/${c.req.param("id")}`, {
+                recursive: true,
+              });
               fs.writeFileSync(`./app/${c.req.param("id")}/build.log`, "", {});
             }
-            fileWatcher = fs.watchFile(`./app/${c.req.param("id")}/build.log`, {interval: 10}, (curr, prev) => {
-              if (fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {            
-                const log = fs.readFileSync(
-                  `./app/${c.req.param("id")}/build.log`,
-                  "utf-8"
-                );
-                ws.send(log);
+            fileWatcher = fs.watchFile(
+              `./app/${c.req.param("id")}/build.log`,
+              { interval: 10 },
+              (curr, prev) => {
+                if (fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
+                  const log = fs.readFileSync(
+                    `./app/${c.req.param("id")}/build.log`,
+                    "utf-8"
+                  );
+                  ws.send(log);
+                }
               }
-            });
+            );
           }
         },
         onClose() {
           fileWatcher?.removeAllListeners();
-        }
-      }
+        },
+      };
     })
   );
 
-  app.get("/log/func/:id", upgradeWebSocket(async (c) => {
-    const logSpawn = spawn("docker", ["service", "logs", "--raw" , "-f" , `devploy-${c.req.param("id")}`]);
-    return {
-      onOpen(evt, ws) {
-        let logs = "";
-        logSpawn.stdout?.on("data", (data) => {
-          logs += data.toString();
-          ws.send(logs);
-        });
-        logSpawn.stderr?.on("data", (data) => {
-          logs += data.toString();
-          ws.send(logs);
-        });
-      },
-      onClose() {
-        logSpawn.kill();
-      }
-    }
-  }))
+  app.get(
+    "/log/func/:id",
+    upgradeWebSocket(async (c) => {
+      const logSpawn = spawn("docker", [
+        "service",
+        "logs",
+        "--raw",
+        "-f",
+        `devploy-${c.req.param("id")}`,
+      ]);
+      return {
+        onOpen(evt, ws) {
+          let logs = "";
+          logSpawn.stdout?.on("data", (data) => {
+            logs += data.toString();
+            ws.send(logs);
+          });
+          logSpawn.stderr?.on("data", (data) => {
+            logs += data.toString();
+            ws.send(logs);
+          });
+        },
+        onClose() {
+          logSpawn.kill();
+        },
+      };
+    })
+  );
 
-  app.get('/application/:id/status', upgradeWebSocket(async (c) => {
-    let status: string | null = null;
-    const cleanUpStatus = setInterval(async () => {
-      const application = await prisma.appication.findFirst({
-        where: {
-          id: parseInt(c.req.param("id")),
+  app.get(
+    "/application/:id/status",
+    upgradeWebSocket(async (c) => {
+      let status: string | null = null;
+      const cleanUpStatus = setInterval(async () => {
+        const application = await prisma.appication.findFirst({
+          where: {
+            id: parseInt(c.req.param("id")),
+          },
+          select: {
+            status: true,
+          },
+        });
+        status = application?.status || null;
+      }, 1000);
+      let cleanUpSender: NodeJS.Timeout | null = null;
+      return {
+        onOpen: async (evt, ws) => {
+          let oldStatus: string | null = null;
+          cleanUpSender = setInterval(() => {
+            if (status != null && status != oldStatus) {
+              oldStatus = status;
+              ws.send(status);
+            }
+          }, 1000);
         },
-        select: {
-          status: true,
-        },
-      })
-      status = application?.status || null;
-    },1000)
-    let cleanUpSender: NodeJS.Timeout | null = null
-    return {
-      onOpen: async (evt, ws) => {
-        let oldStatus: string | null = null;
-        cleanUpSender = setInterval(() => {
-          if (status != null && status != oldStatus) {
-            oldStatus = status;
-            ws.send(status);
+        onClose: () => {
+          clearInterval(cleanUpStatus);
+          if (cleanUpSender) {
+            clearInterval(cleanUpSender);
           }
-        }, 1000);
-      },
-      onClose: () => {
-        clearInterval(cleanUpStatus);
-        if (cleanUpSender) {
-          clearInterval(cleanUpSender);
-        }
-      }
-    }
-  }))
+        },
+      };
+    })
+  );
 
   app.use(logger());
   app.use(cors());
@@ -253,7 +266,7 @@ async function main() {
   injectWebSocket(server);
 
   new CronJob(
-    "* * * * * 1",
+    "0 0 * * * 1",
     async () => {
       if (fs.existsSync("access.log")) {
         console.log("Checking for inactive applications");
@@ -271,9 +284,12 @@ async function main() {
             index === self.findIndex((t) => t.ServiceName === log.ServiceName)
           );
         });
-        const formattedLogs = removedDupeLogs.map((log) =>
-          parseInt(log.ServiceName.replaceAll(/[^0-9]/g, ""))
-        );
+        const formattedLogs = removedDupeLogs.map((log) => {
+          if (!log.ServiceName) {
+            return 0;
+          }
+          return parseInt(log.ServiceName.replaceAll(/[^0-9]/g, ""));
+        });
         const applications = await prisma.appication.findMany({
           where: {
             NOT: {
