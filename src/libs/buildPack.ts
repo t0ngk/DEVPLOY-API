@@ -4,13 +4,21 @@ COPY . /usr/share/nginx/html
 `;
 };
 
-export const createNodeBuildpack = (config: { [key: string]: string } = {
+export const createNodeBuildpack = (config: {
+  buildCommand: string;
+  installCommand: string;
+  startCommand: string;
+  env?: string[];
+} = {
   buildCommand: "npm run build",
   installCommand: "npm install",
   startCommand: "node build/index.js",
 }) => {
+  console.log(config);
   return `FROM node as build
 WORKDIR /app
+
+${config.env ? config.env.map((env) => `ENV ${env}`).join("\n") : ""}
 
 COPY package.json ./
 RUN ${config.installCommand}

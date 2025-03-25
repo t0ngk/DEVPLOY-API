@@ -122,8 +122,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
           installCommand: z.string(),
           buildCommand: z.string(),
           startCommand: z.string(),
+          env: z.array(z.string()).optional(),
         })
         .safeParse(application.config);
+      console.log(validate.error);
       if (!validate.success) {
         throw new Error("Invalid config");
       }
