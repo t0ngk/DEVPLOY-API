@@ -63,24 +63,9 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
 
   if (
     isApplicationRunningInDocker.length > 0 &&
-    (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) == 0
-  ) {
-    if (
-      application?.status != "inProgress" &&
-      application?.status != "Failed"
-    ) {
-      await prisma.appication.update({
-        where: {
-          id,
-        },
-        data: {
-          status: "notStarted",
-        },
-      });
-    }
-  } else if (
-    isApplicationRunningInDocker.length > 0 &&
-    (isApplicationRunningInDocker[0].ServiceStatus?.RunningTasks ?? 0) > 0
+    isApplicationRunningInDocker[0].ServiceStatus &&
+    isApplicationRunningInDocker[0].ServiceStatus.RunningTasks > 0 &&
+    application?.status !== "Deployed"
   ) {
     await prisma.appication.update({
       where: {
@@ -88,6 +73,15 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
       },
       data: {
         status: "Deployed",
+      },
+    });
+  } else if (application?.status !== "inProgress" && application?.status !== "Failed") {
+    await prisma.appication.update({
+      where: {
+        id,
+      },
+      data: {
+        status: "notStarted",
       },
     });
   }
