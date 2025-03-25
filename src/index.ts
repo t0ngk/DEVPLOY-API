@@ -68,7 +68,7 @@ async function main() {
               status: true,
             },
           });
-          if (application && application.status == "Deployed") {
+          if (application && application.status !== "inProgress") {
             ws.send((application.logs as string[]).join("\n"));
           } else {
             if (!fs.existsSync(`./app/${c.req.param("id")}/build.log`)) {
