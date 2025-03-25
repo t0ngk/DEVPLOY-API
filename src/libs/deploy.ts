@@ -163,16 +163,18 @@ export const deployApplication = async (application: ApplicationWithSource) => {
     if ((error as SpawnAsyncOutput).output) {
       const errorOutput = error as SpawnAsyncOutput;
       logs.push(...errorOutput.output);
+      console.log("Update fail status")
+      await prisma.appication.update({
+        where: {
+          id: application.id,
+        },
+        data: {
+          status: "Failed",
+          logs: logs,
+        },
+      });
     }
-    await prisma.appication.update({
-      where: {
-        id: application.id,
-      },
-      data: {
-        status: "Failed",
-        logs: logs,
-      },
-    });
+    console.error(error);
     console.error("Application failed to build", application.id, logs);
     return false;
   }

@@ -18,7 +18,7 @@ export const spawnAsync = (command: string, args?: string[], onData?: (data:stri
       onData?.(data.toString());
     });
     child.on("close", (code) => {
-      let output = rawOutput.replaceAll("\r", "\n").split("\n").map((x) => x.trim()).filter((x) => x !== "");
+      let output = rawOutput.replaceAll("\r", "\n").split("\n").map((x) => x.replaceAll(/[^\x20-\x7F]+/g, "HERE").trim()).filter((x) => x !== "");
       resolve({ code, output});
     });
   });
