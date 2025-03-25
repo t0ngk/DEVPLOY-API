@@ -65,7 +65,7 @@ app.openapi(getApplicationFromIdRoute, async (c) => {
     isApplicationRunningInDocker.length > 0 &&
     isApplicationRunningInDocker[0].ServiceStatus &&
     isApplicationRunningInDocker[0].ServiceStatus.RunningTasks > 0 &&
-    application?.status !== "Deployed"
+    application?.status !== "Deployed" || application?.status === "Deployed"
   ) {
     await prisma.appication.update({
       where: {
