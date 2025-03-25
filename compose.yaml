@@ -8,6 +8,7 @@ services:
       - //var/run/docker.sock:/var/run/docker.sock
       - ./access.log:/usr/src/app/access.log
     ports:
+      - 3000:3000
       - 5555:5555
     networks:
       - devploy-network
@@ -16,7 +17,7 @@ services:
       - postgres
     labels:
       - "traefik.enable=true"
-      - 'traefik.http.routers.devploy-api.rule=Host(`api.localhost`)'
+      - 'traefik.http.routers.devploy-api.rule=Host(`api.devploy.dev`)'
       - 'traefik.http.services.devploy-api.loadbalancer.server.port=3000'
 
   postgres:
