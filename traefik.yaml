@@ -22,7 +22,7 @@ services:
       - traefik-public
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
-      - './:/var/log/traefik'
+      - './access.log:/var/log/traefik/access.log'
     deploy:
       labels:
         # Dashboard
