@@ -14,6 +14,7 @@ import application from "./routes/application/application.handler";
 import database from "./routes/database/database.handler";
 import setting from "./routes/setting/setting.handler";
 import dashboard from "./routes/dashboard/dashboard.handler";
+import quota from "./routes/quota/quota.handler";
 import { docker } from "./libs/docker";
 import { spawnAsync } from "./libs/spawnAsync";
 import prisma from "./libs/prisma";
@@ -177,6 +178,7 @@ async function main() {
   app.route("/database", database);
   app.route("/setting", setting);
   app.route("/dashboard", dashboard);
+  app.route("/quota", quota);
 
   const port = 3000;
 
