@@ -9,6 +9,7 @@ import { getGoogleProfile, google } from "../../../libs/googleAuth";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import prisma from "../../../libs/prisma";
 import { errorHook } from "../../../libs/errorHook";
+import { sign } from "hono/jwt";
 
 const app = new OpenAPIHono({
   defaultHook: errorHook
@@ -20,7 +21,6 @@ app.openapi(googleLoginRoute, async (c) => {
   const url: URL = google.createAuthorizationURL(state, codeVerifier, ["profile", "email"]);
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("prompt", "consent");
-  console.log(url);
   setCookie(c, "state", state, { secure: true });
   setCookie(c, "codeVerifier", codeVerifier, { secure: true });
   return c.redirect(url.toString());
@@ -52,14 +52,14 @@ app.openapi(googleCallbackRoute, async (c) => {
       400
     );
   }
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: {
       email: googleProfile.email,
     },
   });
   if (!user) {
     const DEFAULT_WORKSPACE_NAME = `${googleProfile.given_name}'s Workspace`;
-    await prisma.$transaction(async (tx) => {
+    user = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: googleProfile.email,
@@ -102,17 +102,22 @@ app.openapi(googleCallbackRoute, async (c) => {
           },
         },
       });
+      return user;
     });
   }
-  setCookie(c, "accessToken", tokens.accessToken(), {
-    secure: true,
-    expires: tokens.accessTokenExpiresAt(),
+  // setCookie(c, "accessToken", tokens.accessToken(), {
+  //   secure: true,
+  //   expires: tokens.accessTokenExpiresAt(),
+  // });
+  // if (tokens.hasRefreshToken()) {
+  //   setCookie(c, "refreshToken", tokens.refreshToken(), {
+  //     secure: true,
+  //   });
+  // }
+  const jwt = await sign({ id: user.id }, process.env.JWT_SECRET);
+  setCookie(c, "accessToken", jwt, {
+    secure: true
   });
-  if (tokens.hasRefreshToken()) {
-    setCookie(c, "refreshToken", tokens.refreshToken(), {
-      secure: true,
-    });
-  }
   deleteCookie(c, "codeVerifier");
   deleteCookie(c, "state");
   return c.redirect(process.env.BASE_URL);

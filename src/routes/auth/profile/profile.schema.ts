@@ -16,7 +16,7 @@ export const profileResponse = z
     firstName: z.string(),
     lastName: z.string(),
     picture: z.string().url().nullable(),
-    role: z.enum(["OWNER", "ADMIN", "USER"]),
+    role: z.enum(["OWNER", "ADMIN", "MEMBER"]),
     applicationQuota: z.number(),
     databaseQuota: z.number(),
   })

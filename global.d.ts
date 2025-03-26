@@ -8,5 +8,6 @@ namespace NodeJS {
     GITHUB_CLIENT_ID: string;
     GITHUB_CLIENT_SECRET: string;
     BASE_URL: string;
+    JWT_SECRET: string;
   }
 }
