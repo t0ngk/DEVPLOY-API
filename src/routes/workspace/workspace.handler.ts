@@ -17,6 +17,7 @@ import prisma from "../../libs/prisma";
 import { Workspace } from "@prisma/client";
 import namor from "namor";
 import { errorHook } from "../../libs/errorHook";
+import { docker } from "../../libs/docker";
 
 const app = new OpenAPIHono<Context>({
   defaultHook: errorHook,
@@ -141,6 +142,22 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
   if (!workspace) {
     return c.json({ message: "Workspace not found" }, 404);
   }
+  const databaseWithStatus = workspace.Database.map(async (database) => {
+    const dockerService = await docker.listServices({
+      filters: {
+        name: [`devploy-db-${database.id}`],
+      },
+      status: true,
+    });
+    return {
+      status:
+        dockerService.length > 0 &&
+        (dockerService[0].ServiceStatus?.RunningTasks ?? 0) > 0
+          ? "Deployed"
+          : "Stopped",
+      ...database,
+    };
+  })
   return c.json({
     ...workspace,
     Members: workspace.Members.map((member) => {
@@ -150,6 +167,7 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
       };
     }),
     Invite: workspace.Invite.map((invite) => invite.toUser),
+    Database: await Promise.all(databaseWithStatus),
   });
 });
 
