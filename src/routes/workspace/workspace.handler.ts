@@ -429,7 +429,7 @@ app.openapi(applicationCreateRoute, async (c) => {
       userId: user.id,
     },
   });
-  const isLimitReached = allApplications >= user.applicationQuota;
+  const isLimitReached = allApplications > user.applicationQuota;
   if (isLimitReached) {
     return c.json(
       {
