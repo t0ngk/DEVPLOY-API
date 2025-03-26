@@ -41,6 +41,16 @@ app.openapi(googleCallbackRoute, async (c) => {
     );
   }
 
+  const setting = await prisma.setting.findFirst();
+  if (!setting) {
+    return c.json(
+      {
+        message: "Setting not found",
+      },
+      500
+    );
+  }
+
   const tokens = await google.validateAuthorizationCode(code, codeVerifier);
   const googleProfile = await getGoogleProfile(tokens.accessToken());
   const isOwner = (await prisma.user.count()) === 0;
@@ -67,6 +77,8 @@ app.openapi(googleCallbackRoute, async (c) => {
           firstName: googleProfile.given_name,
           lastName: googleProfile.family_name,
           picture: googleProfile.picture,
+          applicationQuota: setting.defaultApplictionQuota,
+          databaseQuota: setting.defaultDatabaseQuota,
           role: isOwner ? "OWNER" : "MEMBER",
         },
       });
