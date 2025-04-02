@@ -34,7 +34,7 @@ app.openapi(getSettingRoute, async (c) => {
 app.openapi(editSettingRoute, async (c) => {
   const user = c.get("user");
   const setting = await c.req.json();
-  if (user.role !== "OWNER" || user.role !== "ADMIN") {
+  if (user.role !== "OWNER" && user.role !== "ADMIN") {
     return c.json({ message: "Unauthorized" }, 401);
   }
   const currentSetting = await prisma.setting.findFirst();
