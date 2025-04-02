@@ -108,6 +108,7 @@ app.openapi(deleteDatabaseRoute, async (c) => {
   if (!database) {
     return c.json({ message: "Database not found" }, 404);
   }
+  stopDatabase(database);
   await prisma.database.delete({
     where: {
       id,
