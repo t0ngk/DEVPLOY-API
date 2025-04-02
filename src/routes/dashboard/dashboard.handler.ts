@@ -65,7 +65,7 @@ app.openapi(editUserRoute, async (c) => {
   }
   const data = await c.req.json();
   if (data.role && user.role !== "OWNER") {
-    return c.json({ message: "Unauthorized" }, 401);
+    delete data.role;
   }
   await prisma.user.update({
     where: {
