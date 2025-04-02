@@ -23,14 +23,17 @@ app.openapi(googleLoginRoute, async (c) => {
   url.searchParams.set("prompt", "consent");
   setCookie(c, "state", state, { secure: true });
   setCookie(c, "codeVerifier", codeVerifier, { secure: true });
-  return c.redirect(url.toString());
+  // return c.redirect(url.toString());
+  return c.json({
+    url: url.toString(),
+    state,
+    codeVerifier,
+  })
 });
 
 app.openapi(googleCallbackRoute, async (c) => {
-  const codeVerifier = getCookie(c, "codeVerifier");
-  const cookieState = getCookie(c, "state");
 
-  const { code, state } = c.req.query();
+  const { code, state, codeVerifier, cookieState } = await c.req.json();
 
   if (!code || !cookieState || !codeVerifier || state !== cookieState) {
     return c.json(
@@ -130,9 +133,13 @@ app.openapi(googleCallbackRoute, async (c) => {
   setCookie(c, "accessToken", jwt, {
     secure: true
   });
+
+  return c.json({
+    accessToken: jwt,
+  });
   deleteCookie(c, "codeVerifier");
   deleteCookie(c, "state");
-  return c.redirect(process.env.BASE_URL);
+  return c.redirect(`${process.env.BASE_URL}#${`${jwt}`}`);
 });
 
 app.openapi(googleRefreshTokenRoute, async (c) => {
