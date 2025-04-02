@@ -188,6 +188,10 @@ export const deployApplication = async (application: ApplicationWithSource) => {
     `traefik.http.services.devploy-app${application.id}.loadbalancer.server.port`,
     getPortFromConfig(application.config)
   );
+  const openTLS = createDynamicTraefikRule(
+    `traefik.http.routers.devploy-app${application.id}.tls`,
+    "true"
+  )
 
   const loadEnv = getEnvFromConfig(application.config);
 
@@ -215,6 +219,7 @@ export const deployApplication = async (application: ApplicationWithSource) => {
       "traefik.enable": "true",
       ...traefikURL,
       ...traefikPort,
+      ...openTLS
     },
   };
 
