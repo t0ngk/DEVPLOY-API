@@ -26,7 +26,7 @@ app.openapi(getSettingRoute, async (c) => {
     },
   };
   const settings = await prisma.setting.findFirst({
-    select: user.role === "OWNER" ? ownerQuery.select : userQuery.select,
+    select: user.role === "OWNER" || user.role === 'ADMIN' ? ownerQuery.select : userQuery.select,
   });
   return c.json(settings);
 });
