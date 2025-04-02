@@ -23,7 +23,11 @@ const app = new OpenAPIHono<Context>({
   defaultHook: errorHook,
 });
 
-const getWorkspace = async (slug: string, userId: number) => {
+const getWorkspace = async (
+  slug: string,
+  userId: number,
+  isOwner: boolean = true
+) => {
   return await prisma.$transaction(async (tx) => {
     const workspace = await tx.workspace.findFirst({
       where: {
@@ -42,7 +46,7 @@ const getWorkspace = async (slug: string, userId: number) => {
       where: {
         workspaceId: workspace.id,
         userId,
-        role: "OWNER",
+        ...(isOwner ? { role: "OWNER" } : { role: { not: "OWNER" } }),
       },
     });
     if (!permission) {
@@ -157,7 +161,7 @@ app.openapi(getWorkspaceBySlugRoute, async (c) => {
           : "Stopped",
       ...database,
     };
-  })
+  });
   return c.json({
     ...workspace,
     Members: workspace.Members.map((member) => {
@@ -278,7 +282,8 @@ app.openapi(leaveWorkspaceRoute, async (c) => {
   const slug = c.req.param("slug");
   const workspace: Workspace | null = await getWorkspace(
     slug,
-    c.get("user").id
+    c.get("user").id,
+    false
   );
   if (!workspace) {
     return c.json({ message: "Permission denied or workspace not found" }, 404);
