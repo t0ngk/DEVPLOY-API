@@ -24,6 +24,7 @@ app.openapi(googleLoginRoute, async (c) => {
   setCookie(c, "state", state, { secure: true });
   setCookie(c, "codeVerifier", codeVerifier, { secure: true });
   // return c.redirect(url.toString());
+  console.log("Redirect to ", process.env.GOOGLE_CALLBACK_URL);
   return c.json({
     url: url.toString(),
     state,
