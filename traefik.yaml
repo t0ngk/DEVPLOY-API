@@ -1,39 +1,40 @@
 version: '3.3'
-secrets:
-  cf-token:
-    file: ./traefik/cf-token
+
 services:
   traefik:
     image: 'traefik:v3.3.4'
+    command:
+      - --log.level=DEBUG
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.swarm
+      - --providers.swarm.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.docker.network=traefik-public
+      - --api
+      - --api.dashboard=true
+      - --accesslog=true
+      - --accesslog.filepath=/var/log/traefik/access.log
+      - --accesslog.format=json
     ports:
       - '80:80'
       - '443:443'
     networks:
       - traefik-public
-    environment:
-      - CF_DNS_API_TOKEN_FILE=/run/secrets/cf-token
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
       - './access.log:/var/log/traefik/access.log'
-      - './traefik/traefik.yaml:/traefik.yaml:ro'
-      - './traefik/acme.json:/acme.json'
-      - './traefik/config.yaml:/config.yaml:ro'
+      - './traefik/certs:/etc/certs'
+      - './traefik/cert-trarfik.yaml:/etc/traefik/dynamic/cert-trarfik.yaml'
     deploy:
       labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.devploy.dev`)"
-      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
-      - "traefik.http.routers.traefik-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.devploy.dev`)"
-      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
-      - "traefik.http.routers.traefik-secure.tls=true"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].main=devploy.dev"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.devploy.dev"
-      - "traefik.http.routers.traefik-secure.service=api@internal"
+        # Dashboard
+        - 'traefik.enable=true'
+        # Change the host url here
+        - 'traefik.http.routers.traefik.rule=Host(`traefik.devploy.dev`)'
+        - 'traefik.http.routers.traefik.tls=true'
+        - 'traefik.http.routers.traefik.service=api@internal'
+        - 'traefik.http.services.traefik.loadbalancer.server.port=8080'
 
 volumes:
   traefik-log:

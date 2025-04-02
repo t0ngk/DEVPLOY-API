@@ -29,4 +29,5 @@ lerna-debug.log*
 
 # prisma
 prisma/dbml
-traefik/cf-token
+traefik/certs/cert.crt
+traefik/certs/cert.key
