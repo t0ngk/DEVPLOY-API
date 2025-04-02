@@ -13,7 +13,7 @@ const app = new OpenAPIHono<Context>({
 
 // https://github.com/apps/devploy-dev/installations/new/
 app.openapi(githubInstallCallbackRoute, async (c) => {
-  const { installation_id, setup_action, code } = c.req.query();
+  const { installation_id, setup_action, code } = await c.req.json();
   console.log(installation_id, setup_action, code);
   const user = c.get("user");
   if (setup_action == "install") {
@@ -28,7 +28,9 @@ app.openapi(githubInstallCallbackRoute, async (c) => {
       },
     });
   }
-  return c.redirect(process.env.BASE_URL);
+  return c.json({
+    message: "Success",
+  });
 });
 
 app.openapi(githubGetRepoRoute, async (c) => {

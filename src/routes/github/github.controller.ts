@@ -4,14 +4,30 @@ import { isUserLoggedInByCookie } from "../../libs/middlewares/isUserLoggedInByC
 import { isUserLoggedIn } from "../../libs/middlewares/isUserLoggedIn";
 
 export const githubInstallCallbackRoute = createRoute({
-  method: "get",
+  method: "post",
   path: "/app",
   summary: "GitHub App Callback",
   description: "Install GitHub App to user's account",
   tags: ["GitHub"],
-  middleware: [isUserLoggedInByCookie],
+  middleware: [isUserLoggedIn],
+  security: [
+    {
+      GoogleOAuthJWT: [],
+    },
+  ],
   request: {
-    query: githubInstallAppRequest,
+    // query: githubInstallAppRequest,
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            installation_id: z.string(),
+            setup_action: z.string(),
+            code: z.string(),
+          }),
+        },
+      },
+    },
   },
   responses: {
     302: {
@@ -29,19 +45,22 @@ export const githubGetRepoRoute = createRoute({
   middleware: [isUserLoggedIn],
   security: [
     {
-      GoogleOAuthJWT: []
-    }
+      GoogleOAuthJWT: [],
+    },
   ],
   request: {
     params: githubGetRepoRequest,
     query: z.object({
-      repo: z.string().optional().openapi({
-        param: {
-          in: "query",
-          name: "repo",
-        },
-      }),
-    })
+      repo: z
+        .string()
+        .optional()
+        .openapi({
+          param: {
+            in: "query",
+            name: "repo",
+          },
+        }),
+    }),
   },
   responses: {
     200: {
@@ -60,5 +79,5 @@ export const githubInstallAppRoute = createRoute({
     302: {
       description: "Redirect to GitHub App",
     },
-  }
+  },
 });
